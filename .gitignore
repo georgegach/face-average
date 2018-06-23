@@ -1,3 +1,11 @@
-datasets
-results
+# Ignore these 
+datasets/*
+results/*
 */__pycache__
+
+
+# Include these 
+!results/ge*
+!results/us*
+!datasets/ge*
+!datasets/us*
