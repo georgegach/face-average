@@ -60,3 +60,8 @@ usage: run.py [-h] -i INPUT [-ow WIDTH] [-oh HEIGHT] [-e EXT [EXT ...]]
 
 # Based on 
 Source code by Satya Malick - https://www.learnopencv.com/average-face-opencv-c-python-tutorial/
+
+
+# Examples
+![](https://github.com/georgegach/face-average/blob/master/results/ge-mp-president.jpg?v=4&s=50)
+![](https://github.com/georgegach/face-average/blob/master/results/ge-mp-f.jpg?v=4&s=50)
