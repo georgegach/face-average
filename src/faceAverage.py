@@ -30,8 +30,7 @@ class Averager(object):
 
     def run(self, path, ext=['*.jpg','*.jpeg'], window=False, windowTime=500, showWarps=False, useCaching=True):
         
-
-        self.folder = os.path.basename(path)
+        self.inputpath = path
         self.images = self.detective.getImages(path, ext=ext).features(useCaching=useCaching).detections
         w, h = self.width, self.height
         
@@ -167,7 +166,12 @@ class Averager(object):
     
     def save(self, name=None):
         if name is None:
-            name = './results/' + self.folder + '.jpg'
+            if 'datasets' in self.inputpath:
+                name = '-'.join(self.inputpath.split('datasets')[1].split('/'))[1:]
+                name = './results/' + name + '.jpg'
+            else:
+                name = './results/' + self.inputpath.split('/')[-1] + '.jpg'
+
         
         cv2.imwrite(name, self.result)
         return self

@@ -3,7 +3,7 @@ import sys
 import time
 from argparse import ArgumentParser
 sys.path.append("./src")
-from src/faceAverage import Averager
+from faceAverage import Averager
 
 
 if __name__ == '__main__' :
