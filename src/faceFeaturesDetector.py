@@ -79,6 +79,8 @@ class Detective(object):
         with tqdm(self.files) as pbar:
             for f in pbar:
                 det = self.imageFeatures(f, useCaching=useCaching)
+                if len(det) == 0:
+                    print(f)
                 pbar.set_description(f"Faces detected: {len(det)} in ...{det[0]['imgPath'][-10:]}")
                 self.detections.extend(det)
                     
@@ -86,10 +88,3 @@ class Detective(object):
         return self
 
 
-
-
-
-
-
-# if __name__ == '__main__' :
-# [print(f) for f in Detective().getImages("datasets/family/keti").features(writeFiles=False).detections]

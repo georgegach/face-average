@@ -13,7 +13,7 @@ from skimage import io
 
 class Averager(object): 
 
-    def __init__(self, width=300, height=400):
+    def __init__(self, width=600, height=800):
         self.width = width
         self.height = height
         self.detective = Detective()
