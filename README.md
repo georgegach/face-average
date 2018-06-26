@@ -11,7 +11,6 @@ python ./run.py  -i "datasets/ge-mp/president" -w -wt 200
 usage: run.py [-h] -i INPUT [-ow WIDTH] [-oh HEIGHT] [-e EXT [EXT ...]]
               [-o OUTPUT] [-w] [-nw] [-nc] [-wt WINDOWTIME]
 
-
   -h, --help            show this help message and exit
   -i INPUT, --input-dir INPUT
                         Specify the input directory
@@ -23,12 +22,12 @@ usage: run.py [-h] -i INPUT [-ow WIDTH] [-oh HEIGHT] [-e EXT [EXT ...]]
                         Specify the file extensions like *.jpg *.whatevs.file
   -o OUTPUT, --output-path OUTPUT
                         Specify the output path for writing result. Default
-                        ./results/[input-dir-name].jpg
-  -w, --window          Shows window if set to True
-  -nw, --no-warps       Shows warping stage if set to True
-  -nc, --no-caching     Load shape features from cache of .txt files
+                        ./results/[input-dir-names].jpg
+  -w, --window          Shows window if specified
+  -nw, --no-warps       Hides warping stage if specified
+  -nc, --no-caching     Ignores .ff file cache if specified
   -wt WINDOWTIME, --window-time WINDOWTIME
-                        Specify how long should window stay on in miliseconds
+                        Duration of each frame in debug window
 ```
 
 
@@ -63,5 +62,4 @@ Source code by Satya Malick - https://www.learnopencv.com/average-face-opencv-c-
 
 
 # Examples
-![](https://github.com/georgegach/face-average/blob/master/results/ge-mp-president.jpg?v=4&s=50)
-![](https://github.com/georgegach/face-average/blob/master/results/ge-mp-f.jpg?v=4&s=50)
+![](https://github.com/georgegach/face-average/blob/master/results/got-averages.jpg)
