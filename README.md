@@ -70,7 +70,7 @@ file format for storing facial features and landmarks
 # Acknowledgement
 - The project is based on the [tutorial / source code](https://www.learnopencv.com/average-face-opencv-c-python-tutorial/) by Satya Malick.
 - This project fixes couple of bugs, extends functionality and defines better cache file format.
-- The github repo also hosts shape_predictor_68_face_landmarks.dat for ease of use which is part of larger open-source and publicly available project dlib (http://dlib.net/)
+- The github repo also hosts ```shape_predictor_68_face_landmarks.dat``` for ease of use which is part of larger open-source and publicly available project dlib (http://dlib.net/)
 
 
 # Examples
