@@ -1,10 +1,20 @@
 # face-average
-### Basic usage
-
-Run the script with opencv window open (starts in 1 sec after opening) and image transition time 200 ms (50ms original, 150ms warped image)
+### Quickstart guide
+Clone the repo
 ```bash
+git clone https://github.com/georgegach/face-average.git
+```
+Move to directory and execute run.py with appropriate parameters
+```bash
+cd ./face-average
 python ./run.py  -i "datasets/ge-mp/president" -w -wt 200
 ```
+This script will open a ```debug window``` showing the progress of the execution with 200ms frames, generate ```.ff``` files for every image and output average face as ```./results/ge-mp-president.jpg```
+
+### Requirements
+- OpenCV 
+- Dlib
+- Python 3.6+ (preferably Anaconda distribution)
 
 ### Params
 ```
@@ -32,7 +42,7 @@ usage: run.py [-h] -i INPUT [-ow WIDTH] [-oh HEIGHT] [-e EXT [EXT ...]]
 
 
 ### .ff file format
-.ff - facial features file format stores 
+.ff - facial landmarks file format stores 
 - number of features 
 - face detection rectangle coordinates (l,t,r,b) ~ (x1, y1) (x2, y2)
 - 68 facial features as (x,y) 
@@ -57,8 +67,10 @@ usage: run.py [-h] -i INPUT [-ow WIDTH] [-oh HEIGHT] [-e EXT [EXT ...]]
 
 
 
-# Based on 
-Source code by Satya Malick - https://www.learnopencv.com/average-face-opencv-c-python-tutorial/
+# Acknowledgement
+- The project is based on the [tutorial / source code](https://www.learnopencv.com/average-face-opencv-c-python-tutorial/) by Satya Malick.
+- This project fixes couple of bugs, extends functionality and defines better cache file format.
+- The github repo also hosts shape_predictor_68_face_landmarks.dat for ease of use which is part of larger open-source and publicly available project dlib (http://dlib.net/)
 
 
 # Examples
