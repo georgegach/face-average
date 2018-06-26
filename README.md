@@ -42,7 +42,7 @@ usage: run.py [-h] -i INPUT [-ow WIDTH] [-oh HEIGHT] [-e EXT [EXT ...]]
 
 
 ### .ff file format
-.ff - facial landmarks file format stores 
+file format for storing facial features and landmarks 
 - number of features 
 - face detection rectangle coordinates (l,t,r,b) ~ (x1, y1) (x2, y2)
 - 68 facial features as (x,y) 
