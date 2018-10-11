@@ -7,9 +7,9 @@ git clone https://github.com/georgegach/face-average.git
 Move to directory and execute run.py with appropriate parameters
 ```bash
 cd ./face-average
-python ./run.py  -i "datasets/ge-mp/president" -w -wt 200
+python ./run.py  -i "datasets/us-mp/president" -w -wt 200
 ```
-This script will open a ```debug window``` showing the progress of the execution with 200ms frames, generate ```.ff``` files for every image and output average face as ```./results/ge-mp-president.jpg```
+This script will open a ```debug window``` showing the progress of the execution with 200ms frames, generate ```.ff``` files for every image and output average face as ```./results/us-mp-president.jpg```
 
 ### Requirements
 - OpenCV 
