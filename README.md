@@ -14,6 +14,7 @@ This script will open a ```debug window``` showing the progress of the execution
 ### Requirements
 - OpenCV 
 - Dlib
+- tqdm
 - Python 3.6+ (preferably Anaconda distribution)
 
 ### Params
