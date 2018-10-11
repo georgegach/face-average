@@ -38,7 +38,7 @@ class Averager(object):
         images = self.loadImages(self.images)
 
         # Eye corners
-        eyecornerDst = [ (np.int(0.3 * w ), np.int(h / 3)), (np.int(0.7 * w ), np.int(h / 3)) ]
+        eyecornerDst = [ (np.int(0.38 * w ), np.int(h / 2.5)), (np.int(0.62 * w ), np.int(h / 2.5)) ]
 
         imagesNorm = []
         pointsNorm = []
