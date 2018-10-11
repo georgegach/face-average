@@ -39,6 +39,9 @@ usage: run.py [-h] -i INPUT [-ow WIDTH] [-oh HEIGHT] [-e EXT [EXT ...]]
   -nc, --no-caching     Ignores .ff file cache if specified
   -wt WINDOWTIME, --window-time WINDOWTIME
                         Duration of each frame in debug window
+  -t TEMPLATE, --template TEMPLATE
+                        Template input image to set as the main face shape
+                        rather than the total average
 ```
 
 

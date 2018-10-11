@@ -13,10 +13,15 @@ class Detective(object):
         self.predictor = dlib.shape_predictor(predictor_path)
 
 
-    def getImages(self, path, ext=["*jpg"]):
+    def getImages(self, path, ext=["*jpg"], template=None):
         self.files = []
         for e in ext:
             self.files.extend(glob.glob(os.path.join(path, e)))
+        if template != None:
+            index = [i for i, s in enumerate(self.files) if template in s]
+            assert index != [], "> Template '{t}' name was not found".format(t=template)
+            index = index[0]
+            self.files = [self.files[index]] + self.files[0:index] + self.files[index+1:]
         return self
 
     # returns image, d

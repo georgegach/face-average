@@ -17,6 +17,11 @@ class Averager(object):
         self.width = width
         self.height = height
         self.detective = Detective()
+        self.params = {
+            'eyeDistance' : 0.3,
+            'eyeRatioY' : 2.5
+        }
+
 
     def loadImages(self, detections):
         pbar = tqdm(range(len(detections)))
@@ -28,17 +33,36 @@ class Averager(object):
         return [np.float32(im['img'])/255.0 for im in detections]
 
 
-    def run(self, path, ext=['*.jpg','*.jpeg'], window=False, windowTime=500, showWarps=False, useCaching=True):
-        
+    def run(self, path, ext=['*.jpg','*.jpeg'], window=False, windowTime=500, showWarps=False, useCaching=True, template=None):
+        self.windowTime = windowTime
         self.inputpath = path
-        self.images = self.detective.getImages(path, ext=ext).features(useCaching=useCaching).detections
+        self.images = self.detective.getImages(path, ext=ext, template=template).features(useCaching=useCaching).detections
         w, h = self.width, self.height
         
         allPoints = [im['shape'] for im in self.images]
         images = self.loadImages(self.images)
 
-        # Eye corners
-        eyecornerDst = [ (np.int(0.38 * w ), np.int(h / 2.5)), (np.int(0.62 * w ), np.int(h / 2.5)) ]
+        # Place a given template in a correct position on canvas
+        if template != None:
+            imEyeDistX = allPoints[0][45][0] - allPoints[0][36][0]
+            scale = (w*self.params['eyeDistance']) / imEyeDistX
+            allPoints[0] = np.multiply(allPoints[0], scale).astype(np.int)
+            images[0] = (cv2.resize(images[0], (0,0), fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC).astype(np.float64) * 255).astype(np.uint8)
+            imEyeMid = ((allPoints[0][45][0] + allPoints[0][36][0])//2, (allPoints[0][45][1] + allPoints[0][36][1])//2)
+            x_start = np.int(w/2 - imEyeMid[0])
+            y_start = np.int(h/self.params['eyeRatioY'] - imEyeMid[1]) 
+            allPoints[0] += (x_start, y_start)
+            canvas = Image.fromarray(np.zeros((h, w, 3), images[0].dtype))
+            canvas.paste(Image.fromarray(images[0]), (x_start, y_start))
+            canvas = np.array(canvas).astype(np.float32)/255
+            canvas = cv2.medianBlur(canvas, 3)
+            images[0] = canvas
+            imEyeDistX = allPoints[0][45][0] - allPoints[0][36][0]
+            imEyeDistY = allPoints[0][45][1] - allPoints[0][36][1]
+            eyecornerDst = [ (np.int(w/2 - imEyeDistX/2), np.int(h / self.params['eyeRatioY'])), (np.int(w/2 + imEyeDistX/2), np.int(h / self.params['eyeRatioY']) + imEyeDistY),  ]
+
+        else:
+            eyecornerDst = [ (np.int(w/2 - w*(self.params['eyeDistance']/2)), np.int(h / self.params['eyeRatioY'])), (np.int(w/2 + w*(self.params['eyeDistance']/2) ), np.int(h / self.params['eyeRatioY'])) ]
 
         imagesNorm = []
         pointsNorm = []
@@ -47,7 +71,15 @@ class Averager(object):
         boundaryPts = np.array([(0,0), (w/2,0), (w-1,0), (w-1,h/2), ( w-1, h-1 ), ( w/2, h-1 ), (0, h-1), (0,h/2) ])
         
         # Initialize location of average points to 0s
-        pointsAvg = np.array([(0,0)]* ( len(allPoints[0]) + len(boundaryPts) ), np.float32())
+        if template != None:
+            points1 = allPoints[0]
+            tform = self.similarityTransform(eyecornerDst, eyecornerDst)
+            points2 = np.reshape(np.array(points1), (68,1,2))        
+            points = cv2.transform(points2, tform)
+            pointsAvg = np.float32(np.reshape(points, (68, 2)))
+            pointsAvg = np.append(pointsAvg, boundaryPts, axis=0)
+        else:
+            pointsAvg = np.array([(0,0)]* ( len(allPoints[0]) + len(boundaryPts) ), np.float32())
         
         n = len(allPoints[0])
 
@@ -81,7 +113,8 @@ class Averager(object):
             points = np.append(points, boundaryPts, axis=0)
             
             # Calculate location of average landmark points.
-            pointsAvg = pointsAvg + points / numImages
+            if template == None:
+                pointsAvg = pointsAvg + points / numImages
             
             pointsNorm.append(points)
             imagesNorm.append(img)
@@ -132,6 +165,10 @@ class Averager(object):
             
             if window:
                 oldImg = cv2.cvtColor(imagesNorm[i], cv2.COLOR_BGR2RGB)
+
+                for j, point in enumerate(pointsNorm[i]):
+                    cv2.putText(oldImg, str(j), (int(point[0]), int(point[1])), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)
+
                 resultImg = cv2.cvtColor(output / (i+1), cv2.COLOR_BGR2RGB)
                 theimg = np.hstack((resultImg, oldImg))
                 cv2.imshow('Face Average', theimg)
@@ -157,7 +194,7 @@ class Averager(object):
         if window:
             cv2.resizeWindow('Face Average', w, h)
             cv2.imshow('Face Average', output)
-            cv2.waitKey(10000)
+            cv2.waitKey(self.windowTime*2)
 
         self.result = output * 255
 
