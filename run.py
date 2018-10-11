@@ -23,6 +23,6 @@ if __name__ == '__main__' :
     options = parser.parse_args()
     print(options)
     ext = options.ext or ["*.jpg", "*.jpeg"]
-    Averager().run(path=options.input, ext=ext, window=options.window, showWarps=not options.noWarps, windowTime=options.windowTime, useCaching=not options.noCaching).save(name=options.output)
+    Averager(width=options.width, height=options.height).run(path=options.input, ext=ext, window=options.window, showWarps=not options.noWarps, windowTime=options.windowTime, useCaching=not options.noCaching).save(name=options.output)
 
     print(f">>> Executed in {time.time()-start:.2f} seconds")
