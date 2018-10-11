@@ -5,8 +5,4 @@ results/*
 
 
 # Include these 
-!results/ge*
-!results/got*
-!results/us*
-!datasets/ge*
-!datasets/us*
+
