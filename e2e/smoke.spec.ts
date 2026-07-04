@@ -48,11 +48,15 @@ test('averages preset faces into a real image', async ({ page }) => {
 })
 
 test('morph mode renders and responds to the blend slider', async ({ page }) => {
+  page.on('console', (m) => console.log(`[browser:${m.type()}] ${m.text()}`))
+  page.on('pageerror', (e) => console.log(`[pageerror] ${e.message}`))
   await page.goto('/')
   await page.getByRole('button', { name: /US Presidents/ }).click()
   await expect(page.getByText('478 pts ✓').nth(1)).toBeVisible({ timeout: 90_000 })
 
   await page.getByRole('button', { name: 'Morph', exact: true }).click()
+  await page.waitForTimeout(1000)
+  console.log('[diag] body text after Morph click:\n' + (await page.locator('main').innerText()))
   await expect(page.getByTestId('morph-canvas')).toBeVisible({ timeout: 30_000 })
   await expect
     .poll(() => canvasVariance(page, 'morph-canvas'), { timeout: 30_000 })
