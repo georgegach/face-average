@@ -1,5 +1,6 @@
 import { FilesetResolver, FaceLandmarker } from '@mediapipe/tasks-vision'
 import { MODELS } from './models'
+import { fetchWithProgress } from './download'
 import type { Landmarks } from './types'
 
 // MediaPipe's WASM loader relies on importScripts, which is unavailable in ES
@@ -7,20 +8,48 @@ import type { Landmarks } from './types'
 // (CPU delegate) and infrequent enough that this keeps the UI responsive.
 let landmarkerPromise: Promise<FaceLandmarker> | null = null
 
+// Load-progress broadcast so the UI can show the one-time model download.
+// frac < 0 means indeterminate (runtime/wasm phase); 0..1 is the model download.
+export type LoadState = { loading: boolean; frac: number }
+const listeners = new Set<(s: LoadState) => void>()
+export function onLandmarkerProgress(cb: (s: LoadState) => void): () => void {
+  listeners.add(cb)
+  return () => listeners.delete(cb)
+}
+function emit(s: LoadState) {
+  for (const cb of listeners) cb(s)
+}
+
 async function getLandmarker(): Promise<FaceLandmarker> {
   if (!landmarkerPromise) {
     landmarkerPromise = (async () => {
-      const fileset = await FilesetResolver.forVisionTasks(MODELS.mediapipeWasm)
-      return FaceLandmarker.createFromOptions(fileset, {
-        baseOptions: { modelAssetPath: MODELS.landmarkerTask, delegate: 'CPU' },
-        runningMode: 'IMAGE',
-        numFaces: 4,
-        outputFaceBlendshapes: false,
-        outputFacialTransformationMatrixes: false,
-      })
+      try {
+        emit({ loading: true, frac: -1 }) // preparing runtime (wasm)
+        const fileset = await FilesetResolver.forVisionTasks(MODELS.mediapipeWasm)
+        const buf = await fetchWithProgress(MODELS.landmarkerTask, (f) =>
+          emit({ loading: true, frac: f }),
+        )
+        const lm = await FaceLandmarker.createFromOptions(fileset, {
+          baseOptions: { modelAssetBuffer: new Uint8Array(buf), delegate: 'CPU' },
+          runningMode: 'IMAGE',
+          numFaces: 4,
+          outputFaceBlendshapes: false,
+          outputFacialTransformationMatrixes: false,
+        })
+        emit({ loading: false, frac: 1 })
+        return lm
+      } catch (e) {
+        emit({ loading: false, frac: 1 })
+        throw e
+      }
     })()
   }
   return landmarkerPromise
+}
+
+/** Kick off the model download early (e.g. on first user intent). */
+export function preloadLandmarker() {
+  void getLandmarker()
 }
 
 export async function detectLandmarks(bitmap: ImageBitmap): Promise<Landmarks | null> {

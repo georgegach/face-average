@@ -12,6 +12,7 @@ export function FaceTray({ onWebcam }: { onWebcam: () => void }) {
   const toggleEnabled = useStore((s) => s.toggleEnabled)
   const setTemplate = useStore((s) => s.setTemplate)
   const clearFaces = useStore((s) => s.clearFaces)
+  const modelLoad = useStore((s) => s.modelLoad)
   const inputRef = useRef<HTMLInputElement>(null)
   const [drag, setDrag] = useState(false)
 
@@ -62,6 +63,25 @@ export function FaceTray({ onWebcam }: { onWebcam: () => void }) {
           onChange={(e) => e.target.files && addFiles(e.target.files)}
         />
       </div>
+
+      {modelLoad.loading && (
+        <div className="panel p-2">
+          <div className="flex justify-between text-[10px] text-muted mb-1">
+            <span>{modelLoad.frac < 0 ? 'Preparing face engine…' : 'Downloading face model…'}</span>
+            {modelLoad.frac >= 0 && <span>{Math.round(modelLoad.frac * 100)}%</span>}
+          </div>
+          <div className="h-1.5 rounded-full bg-surface3 overflow-hidden">
+            {modelLoad.frac < 0 ? (
+              <div className="h-full w-1/3 bg-accent animate-pulse" />
+            ) : (
+              <div
+                className="h-full bg-accent transition-[width] duration-150"
+                style={{ width: `${Math.round(modelLoad.frac * 100)}%` }}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="md:flex-1 overflow-y-auto flex flex-col gap-2 pr-1 max-h-[42vh] md:max-h-none">
         {faces.map((f) => (

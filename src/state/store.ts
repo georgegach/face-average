@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { DEFAULT_SETTINGS, type AverageSettings, type Face } from '../engine/types'
-import { detectLandmarks } from '../engine/landmarks'
+import { detectLandmarks, onLandmarkerProgress, type LoadState } from '../engine/landmarks'
 import { fileToBitmap, urlToBitmap, bitmapToDataURL } from '../engine/image'
 import { computeAverage } from '../engine/average'
 
@@ -22,6 +22,7 @@ interface StoreState {
   error: string | null
   morphA: string | null
   morphB: string | null
+  modelLoad: LoadState
 
   setMode: (m: Mode) => void
   addFiles: (files: FileList | File[]) => Promise<void>
@@ -47,6 +48,7 @@ export const useStore = create<StoreState>((set, get) => ({
   error: null,
   morphA: null,
   morphB: null,
+  modelLoad: { loading: false, frac: 1 },
 
   setMode: (m) => set({ mode: m }),
 
@@ -156,3 +158,6 @@ export const useStore = create<StoreState>((set, get) => ({
     }, 30)
   },
 }))
+
+// Mirror one-time landmarker model-download progress into the store.
+onLandmarkerProgress((s) => useStore.setState({ modelLoad: s }))
