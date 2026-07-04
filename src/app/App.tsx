@@ -4,6 +4,7 @@ import { FaceTray } from '../ui/FaceTray'
 import { Stage } from '../ui/Stage'
 import { Controls } from '../ui/Controls'
 import { WebcamModal } from '../ui/Webcam'
+import { LandmarkEditor } from '../ui/LandmarkEditor'
 import { PresetGallery } from '../ui/PresetGallery'
 import { Icon } from '../ui/Icon'
 import { getTheme, setTheme, type Theme } from '../ui/theme'
@@ -19,6 +20,7 @@ export default function App() {
   const setMode = useStore((s) => s.setMode)
   const faceCount = useStore((s) => s.faces.length)
   const [webcam, setWebcam] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
   const [theme, setThemeState] = useState<Theme>(getTheme())
 
   const toggleTheme = () => {
@@ -74,7 +76,7 @@ export default function App() {
 
       <main className="flex-1 flex flex-col gap-3 p-3 md:grid md:grid-cols-[260px_1fr_280px] md:min-h-0 md:overflow-hidden">
         <aside className="panel p-3 order-2 md:order-1 md:min-h-0 md:overflow-hidden">
-          <FaceTray onWebcam={() => setWebcam(true)} />
+          <FaceTray onWebcam={() => setWebcam(true)} onEdit={setEditId} />
         </aside>
         <section className="panel flex flex-col order-1 md:order-2 min-h-[55vh] md:min-h-0 overflow-hidden">
           <Stage />
@@ -90,6 +92,7 @@ export default function App() {
       </footer>
 
       {webcam && <WebcamModal onClose={() => setWebcam(false)} />}
+      {editId && <LandmarkEditor faceId={editId} onClose={() => setEditId(null)} />}
     </div>
   )
 }

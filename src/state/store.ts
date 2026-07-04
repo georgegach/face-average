@@ -33,6 +33,7 @@ interface StoreState {
   setWeight: (id: string, weight: number) => void
   toggleEnabled: (id: string) => void
   setTemplate: (id: string | null) => void
+  setLandmarks: (id: string, points: Float32Array) => void
   updateSettings: (patch: Partial<AverageSettings>) => void
   runAverage: () => void
   setResult: (img: ImageData | null) => void
@@ -64,6 +65,7 @@ export const useStore = create<StoreState>((set, get) => ({
       failed: false,
       weight: 1,
       enabled: true,
+      editRev: 0,
       thumb: bitmapToDataURL(bmp),
     }
     set((s) => ({ faces: [...s.faces, face] }))
@@ -137,6 +139,31 @@ export const useStore = create<StoreState>((set, get) => ({
     set((s) => ({ faces: s.faces.map((f) => (f.id === id ? { ...f, enabled: !f.enabled } : f)) })),
 
   setTemplate: (id) => set((s) => ({ settings: { ...s.settings, templateId: id } })),
+
+  setLandmarks: (id, points) =>
+    set((s) => ({
+      faces: s.faces.map((f) => {
+        if (f.id !== id || !f.landmarks) return f
+        // Recompute bounding box from the edited points.
+        let minX = Infinity,
+          minY = Infinity,
+          maxX = -Infinity,
+          maxY = -Infinity
+        for (let i = 0; i < points.length; i += 2) {
+          const x = points[i]
+          const y = points[i + 1]
+          if (x < minX) minX = x
+          if (y < minY) minY = y
+          if (x > maxX) maxX = x
+          if (y > maxY) maxY = y
+        }
+        return {
+          ...f,
+          landmarks: { points, box: { x: minX, y: minY, width: maxX - minX, height: maxY - minY } },
+          editRev: f.editRev + 1,
+        }
+      }),
+    })),
 
   updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
 

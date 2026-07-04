@@ -2,7 +2,13 @@ import { useRef, useState } from 'react'
 import { useStore } from '../state/store'
 import { Icon } from './Icon'
 
-export function FaceTray({ onWebcam }: { onWebcam: () => void }) {
+export function FaceTray({
+  onWebcam,
+  onEdit,
+}: {
+  onWebcam: () => void
+  onEdit: (id: string) => void
+}) {
   const faces = useStore((s) => s.faces)
   const mode = useStore((s) => s.mode)
   const templateId = useStore((s) => s.settings.templateId)
@@ -92,8 +98,18 @@ export function FaceTray({ onWebcam }: { onWebcam: () => void }) {
               className={`w-14 h-14 rounded-lg object-cover ${f.enabled ? '' : 'opacity-30'}`}
             />
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <span className="text-xs text-content truncate flex-1">{f.name}</span>
+                {!f.detecting && !f.failed && f.landmarks && (
+                  <button
+                    title="Edit landmarks"
+                    aria-label="Edit landmarks"
+                    className={`hover:text-content ${f.editRev > 0 ? 'text-accent-hi' : 'text-muted'}`}
+                    onClick={() => onEdit(f.id)}
+                  >
+                    <Icon name="edit" size={13} />
+                  </button>
+                )}
                 <button
                   title="Remove"
                   aria-label="Remove face"

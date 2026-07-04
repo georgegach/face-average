@@ -29,6 +29,7 @@ export interface Face {
   failed: boolean
   weight: number
   enabled: boolean
+  editRev: number // bumps when landmarks are manually edited
 }
 
 export interface AverageSettings {

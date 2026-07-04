@@ -16,6 +16,7 @@ export type IconName =
   | 'faces'
   | 'trash'
   | 'check'
+  | 'edit'
 
 // Minimal inline SVG set — stroke uses currentColor so icons inherit text color.
 const PATHS: Record<IconName, JSX.Element> = {
@@ -54,6 +55,12 @@ const PATHS: Record<IconName, JSX.Element> = {
   ),
   trash: <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" />,
   check: <path d="M5 12.5l4 4 10-10" />,
+  edit: (
+    <>
+      <path d="M4 20h4L18.5 9.5a2 2 0 0 0-2.83-2.83L5 17.2z" />
+      <path d="M14.5 7.5l2.8 2.8" />
+    </>
+  ),
 }
 
 export function Icon({ name, size = 18, className = '', filled = false }: Props) {

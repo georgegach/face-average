@@ -61,7 +61,7 @@ function AveragePanel() {
     settings.outHeight,
     settings.eyeDistance.toFixed(3),
     settings.eyeRatioY.toFixed(3),
-    faces.map((f) => `${f.id}:${f.weight}:${f.enabled}:${!!f.landmarks}`),
+    faces.map((f) => `${f.id}:${f.weight}:${f.enabled}:${!!f.landmarks}:${f.editRev}`),
   ])
   useEffect(() => {
     if (!hasResult) return
