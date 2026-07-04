@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-ink-900 text-slate-200 font-sans antialiased;
+  margin: 0;
+}
+
+@layer components {
+  .panel {
+    @apply bg-ink-800/80 border border-ink-600/60 rounded-2xl shadow-glass backdrop-blur;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium
+      transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .btn-accent {
+    @apply btn bg-accent text-ink-900 hover:bg-accent-soft;
+  }
+  .btn-ghost {
+    @apply btn bg-ink-700/60 text-slate-200 hover:bg-ink-600;
+  }
+  .tab {
+    @apply px-4 py-2 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-slate-100;
+  }
+  .tab-active {
+    @apply bg-accent/15 text-accent;
+  }
+  .label {
+    @apply text-xs uppercase tracking-wide text-slate-400 font-semibold;
+  }
+}
+
+input[type='range'] {
+  @apply appearance-none h-1.5 rounded-full bg-ink-600 outline-none;
+}
+input[type='range']::-webkit-slider-thumb {
+  @apply appearance-none w-4 h-4 rounded-full bg-accent cursor-pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

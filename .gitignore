@@ -1,8 +1,11 @@
-# Ignore these 
-datasets/*
-results/*
-*/__pycache__
-
-
-# Include these 
-
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+.vite
+public/models/*.task
+public/models/*.onnx
+public/models/wasm
+test-results
+playwright-report

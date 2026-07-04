@@ -1,0 +1,18 @@
+{
+  "galleries": [
+    {
+      "id": "presidents",
+      "title": "US Presidents",
+      "subtitle": "Six modern presidents — the original demo",
+      "attribution": "Public-domain / fair-use portraits, from the original face-average project.",
+      "images": [
+        "presets/presidents/barak-obama.jpg",
+        "presets/presidents/bill-clinton.jpg",
+        "presets/presidents/george-h-bush.jpg",
+        "presets/presidents/george-w-bush.jpg",
+        "presets/presidents/jimmy-carter.jpg",
+        "presets/presidents/ronald-regan.jpg"
+      ]
+    }
+  ]
+}
