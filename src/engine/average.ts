@@ -150,6 +150,9 @@ const FACE_OVAL = [
  * composite the chosen background outside it.
  */
 function compositeBackground(img: ImageData, mesh: Float32Array, s: AverageSettings) {
+  // 'none' keeps the full-frame average (hair/surroundings included) — the
+  // classic average-face look, no masking.
+  if (s.background === 'none') return
   const { width: w, height: h, data } = img
 
   // Expand the oval outward from its centroid to include a little hair/jaw.

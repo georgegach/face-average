@@ -38,7 +38,7 @@ export interface AverageSettings {
   eyeRatioY: number // eye line at height/eyeRatioY
   colorNormalize: boolean
   maskCompositing: boolean
-  background: 'blur' | 'studio' | 'transparent'
+  background: 'blur' | 'studio' | 'transparent' | 'none'
   templateId: string | null // face id whose geometry defines the shape, or null for average
 }
 

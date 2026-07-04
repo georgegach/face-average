@@ -85,12 +85,12 @@ function AveragePanel() {
 
       <div>
         <div className="label mb-1">Background</div>
-        <div className="flex gap-2">
-          {(['blur', 'studio', 'transparent'] as const).map((b) => (
+        <div className="grid grid-cols-2 gap-2">
+          {(['blur', 'studio', 'transparent', 'none'] as const).map((b) => (
             <button
               key={b}
               onClick={() => update({ background: b })}
-              className={`btn text-xs flex-1 capitalize ${
+              className={`btn text-xs capitalize ${
                 settings.background === b ? 'btn-accent' : 'btn-ghost'
               }`}
             >
