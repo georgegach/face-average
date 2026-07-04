@@ -24,16 +24,19 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Model files are large; precache the app shell, runtime-cache models.
-        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,wasm}'],
+        // Precache only the small app shell; large wasm + models are
+        // runtime-cached on first use (cache-first) for offline capability.
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        globPatterns: ['**/*.{js,css,html}'],
+        globIgnores: ['**/models/**', '**/*.wasm'],
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => url.pathname.includes('/models/'),
+            urlPattern: ({ url }) =>
+              url.pathname.includes('/models/') || url.pathname.endsWith('.wasm'),
             handler: 'CacheFirst',
             options: {
               cacheName: 'facestudio-models',
-              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 90 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },
