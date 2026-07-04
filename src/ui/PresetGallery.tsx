@@ -37,8 +37,8 @@ export function PresetGallery({ compact = false }: { compact?: boolean }) {
   return (
     <div className="max-w-md text-center">
       <div className="text-5xl mb-3">🎭</div>
-      <h2 className="text-xl font-semibold text-slate-100">Blend faces into one</h2>
-      <p className="text-sm text-slate-400 mt-2 mb-5">
+      <h2 className="text-xl font-semibold text-content">Blend faces into one</h2>
+      <p className="text-sm text-muted mt-2 mb-5">
         Drop a few portraits on the left to average them, or start with a preset. Everything runs in
         your browser — your photos never leave your device.
       </p>

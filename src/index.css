@@ -2,51 +2,96 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light theme is the default; .dark on <html> switches to dark. */
 :root {
+  color-scheme: light;
+  --bg: 246 247 249;
+  --surface: 255 255 255;
+  --surface-2: 238 241 245;
+  --surface-3: 226 230 236;
+  --edge: 215 220 227;
+  --content: 26 31 39;
+  --muted: 100 116 139;
+  --faint: 148 163 184;
+  --accent: 8 145 178;
+  --accent-soft: 6 182 212;
+  --accent-ink: 255 255 255;
+  --accent-hi: 14 116 144;
+  --shadow: 15 23 42;
+}
+
+:root.dark {
   color-scheme: dark;
+  --bg: 11 13 16;
+  --surface: 18 21 26;
+  --surface-2: 26 31 39;
+  --surface-3: 36 43 53;
+  --edge: 36 43 53;
+  --content: 226 232 240;
+  --muted: 148 163 184;
+  --faint: 71 85 105;
+  --accent: 34 211 238;
+  --accent-soft: 103 232 249;
+  --accent-ink: 11 13 16;
+  --accent-hi: 34 211 238;
+  --shadow: 0 0 0;
 }
 
 html,
-body,
+body {
+  min-height: 100%;
+}
+
 #root {
-  height: 100%;
+  min-height: 100%;
+}
+@media (min-width: 768px) {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
 }
 
 body {
-  @apply bg-ink-900 text-slate-200 font-sans antialiased;
+  @apply bg-bg text-content font-sans antialiased;
   margin: 0;
 }
 
 @layer components {
   .panel {
-    @apply bg-ink-800/80 border border-ink-600/60 rounded-2xl shadow-glass backdrop-blur;
+    @apply bg-surface/95 border border-edge rounded-2xl backdrop-blur;
+    box-shadow: 0 8px 32px rgb(var(--shadow) / 0.12);
   }
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium
       transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
   }
   .btn-accent {
-    @apply btn bg-accent text-ink-900 hover:bg-accent-soft;
+    @apply btn bg-accent text-accent-ink hover:bg-accent-soft;
   }
   .btn-ghost {
-    @apply btn bg-ink-700/60 text-slate-200 hover:bg-ink-600;
+    @apply btn bg-surface2 text-content hover:bg-surface3;
   }
   .tab {
-    @apply px-4 py-2 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-slate-100;
+    @apply px-4 py-2 rounded-xl text-sm font-medium transition-colors text-muted hover:text-content;
   }
   .tab-active {
-    @apply bg-accent/15 text-accent;
+    @apply bg-accent/15 text-accent-hi;
   }
   .label {
-    @apply text-xs uppercase tracking-wide text-slate-400 font-semibold;
+    @apply text-xs uppercase tracking-wide text-muted font-semibold;
   }
 }
 
 input[type='range'] {
-  @apply appearance-none h-1.5 rounded-full bg-ink-600 outline-none;
+  @apply appearance-none h-1.5 rounded-full bg-surface3 outline-none;
 }
 input[type='range']::-webkit-slider-thumb {
   @apply appearance-none w-4 h-4 rounded-full bg-accent cursor-pointer;
+}
+input[type='range']::-moz-range-thumb {
+  @apply w-4 h-4 rounded-full bg-accent cursor-pointer border-0;
 }
 
 @media (prefers-reduced-motion: reduce) {

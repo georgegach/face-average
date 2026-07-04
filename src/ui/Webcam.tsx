@@ -44,7 +44,7 @@ export function WebcamModal({ onClose }: { onClose: () => void }) {
       <div className="panel p-4 max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold">Webcam capture</h3>
-          <button className="text-slate-400 hover:text-slate-200" onClick={onClose}>
+          <button className="text-muted hover:text-content" onClick={onClose}>
             ✕
           </button>
         </div>
@@ -57,7 +57,7 @@ export function WebcamModal({ onClose }: { onClose: () => void }) {
               autoPlay
               playsInline
               muted
-              className="w-full rounded-xl bg-ink-900 aspect-video object-cover"
+              className="w-full rounded-xl bg-bg aspect-video object-cover"
             />
             <div className="flex gap-2 mt-3">
               <button className="btn-accent flex-1" onClick={capture}>

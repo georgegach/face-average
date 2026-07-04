@@ -13,7 +13,7 @@ export function Slider({ label, value, min, max, step = 1, onChange, format }: P
     <label className="block">
       <div className="flex items-center justify-between mb-1">
         <span className="label">{label}</span>
-        <span className="text-xs text-slate-300 tabular-nums">
+        <span className="text-xs text-content tabular-nums">
           {format ? format(value) : value}
         </span>
       </div>

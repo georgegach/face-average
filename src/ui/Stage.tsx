@@ -34,8 +34,8 @@ function ResultStage() {
   return (
     <div className="flex-1 grid place-items-center p-6 relative">
       {computing && (
-        <div className="absolute inset-0 grid place-items-center bg-ink-900/60 z-10">
-          <div className="text-accent animate-pulse text-sm">Averaging…</div>
+        <div className="absolute inset-0 grid place-items-center bg-bg/70 z-10">
+          <div className="text-accent-hi animate-pulse text-sm">Averaging…</div>
         </div>
       )}
       {error && (
@@ -50,9 +50,9 @@ function ResultStage() {
           className="max-w-full max-h-full rounded-2xl shadow-glass object-contain"
         />
       ) : (
-        <div className="text-slate-500 text-sm text-center">
+        <div className="text-muted text-sm text-center">
           {faces.length} face{faces.length > 1 ? 's' : ''} loaded — press{' '}
-          <span className="text-accent">Average</span> to render.
+          <span className="text-accent-hi">Average</span> to render.
         </div>
       )}
     </div>
@@ -112,10 +112,10 @@ function MorphStage() {
 
   if (!faceA || !faceB) {
     return (
-      <div className="flex-1 grid place-items-center p-6 text-center text-slate-400 text-sm">
+      <div className="flex-1 grid place-items-center p-6 text-center text-muted text-sm">
         <div>
           <p>Pick two faces to morph.</p>
-          <p className="text-slate-500 mt-1">
+          <p className="text-muted mt-1">
             Add at least two detected faces, then choose A and B in the right panel.
           </p>
         </div>
@@ -131,12 +131,12 @@ function MorphStage() {
         className="max-w-full max-h-[60vh] rounded-2xl shadow-glass object-contain"
       />
       <div className="w-full max-w-md panel p-4 flex flex-col gap-3">
-        <div className="flex justify-between text-xs text-slate-400">
+        <div className="flex justify-between text-xs text-muted">
           <span>{faceA.name}</span>
           <span>{faceB.name}</span>
         </div>
         <Slider label="Blend" value={t} min={0} max={1} step={0.01} onChange={setT} format={(v) => `${Math.round(v * 100)}%`} />
-        <label className="flex items-center gap-2 text-xs text-slate-400">
+        <label className="flex items-center gap-2 text-xs text-muted">
           <input type="checkbox" checked={boomerang} onChange={(e) => setBoomerang(e.target.checked)} />
           Boomerang
         </label>

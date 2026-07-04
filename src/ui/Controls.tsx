@@ -80,7 +80,7 @@ function AveragePanel() {
       </div>
 
       <label className="flex items-center justify-between text-sm">
-        <span className="text-slate-300">Colour normalise</span>
+        <span className="text-content">Colour normalise</span>
         <input
           type="checkbox"
           checked={settings.colorNormalize}
@@ -89,7 +89,7 @@ function AveragePanel() {
       </label>
 
       {settings.templateId && (
-        <div className="text-xs text-accent">
+        <div className="text-xs text-accent-hi">
           Using a template face for shape.{' '}
           <button className="underline" onClick={() => update({ templateId: null })}>
             reset
@@ -97,7 +97,7 @@ function AveragePanel() {
         </div>
       )}
 
-      <button className="text-xs text-slate-500 hover:text-slate-300 text-left" onClick={() => setAdv(!adv)}>
+      <button className="text-xs text-muted hover:text-content text-left" onClick={() => setAdv(!adv)}>
         {adv ? '▾' : '▸'} Advanced alignment
       </button>
       {adv && (
@@ -124,7 +124,7 @@ function AveragePanel() {
       )}
 
       {result && (
-        <div className="flex gap-2 border-t border-ink-600/60 pt-3">
+        <div className="flex gap-2 border-t border-edge/70 pt-3">
           <button className="btn-ghost flex-1 text-xs" onClick={() => doExport(1)}>
             PNG
           </button>
@@ -151,7 +151,7 @@ function MorphPanel() {
       <select
         value={value ?? ''}
         onChange={(e) => set(e.target.value)}
-        className="w-full bg-ink-700 rounded-xl px-3 py-2 text-sm"
+        className="w-full bg-surface2 rounded-xl px-3 py-2 text-sm"
       >
         <option value="" disabled>
           choose…
@@ -168,12 +168,12 @@ function MorphPanel() {
   return (
     <div className="flex flex-col gap-4">
       {faces.length < 2 && (
-        <p className="text-xs text-slate-500">Add at least two detected faces to morph.</p>
+        <p className="text-xs text-muted">Add at least two detected faces to morph.</p>
       )}
       {picker('Face A', morphA, (id) => setPair(id, morphB))}
       {picker('Face B', morphB, (id) => setPair(morphA, id))}
       <OutputSize />
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-muted">
         Use the blend slider under the canvas to scrub, or export an animated morph.
       </p>
     </div>
@@ -214,7 +214,7 @@ function EnhancePanel() {
 
   return (
     <div className="flex flex-col gap-4">
-      {!result && <p className="text-xs text-slate-500">Render an average or morph first.</p>}
+      {!result && <p className="text-xs text-muted">Render an average or morph first.</p>}
       <div>
         <div className="label mb-1">Model</div>
         <div className="flex flex-col gap-2">
@@ -232,8 +232,8 @@ function EnhancePanel() {
       <button className="btn-accent" disabled={!result || progress !== null} onClick={run}>
         {progress !== null ? `Upscaling ${Math.round(progress * 100)}%` : 'Upscale 4×'}
       </button>
-      {msg && <p className="text-xs text-slate-400">{msg}</p>}
-      <p className="text-[11px] text-slate-600">
+      {msg && <p className="text-xs text-muted">{msg}</p>}
+      <p className="text-[11px] text-faint">
         Runs on-device via ONNX (WebGPU when available). Large images may take a while.
       </p>
     </div>

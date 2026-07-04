@@ -5,17 +5,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: {
-          900: '#0b0d10',
-          800: '#12151a',
-          700: '#1a1f27',
-          600: '#242b35',
-          500: '#333c48',
-        },
+        // Semantic tokens backed by CSS variables so the same utility classes
+        // resolve to light or dark values depending on the active theme.
+        bg: 'rgb(var(--bg) / <alpha-value>)',
+        surface: 'rgb(var(--surface) / <alpha-value>)',
+        surface2: 'rgb(var(--surface-2) / <alpha-value>)',
+        surface3: 'rgb(var(--surface-3) / <alpha-value>)',
+        edge: 'rgb(var(--edge) / <alpha-value>)',
+        content: 'rgb(var(--content) / <alpha-value>)',
+        muted: 'rgb(var(--muted) / <alpha-value>)',
+        faint: 'rgb(var(--faint) / <alpha-value>)',
         accent: {
-          DEFAULT: '#22d3ee',
-          soft: '#67e8f9',
-          dim: '#0e7490',
+          DEFAULT: 'rgb(var(--accent) / <alpha-value>)',
+          soft: 'rgb(var(--accent-soft) / <alpha-value>)',
+          ink: 'rgb(var(--accent-ink) / <alpha-value>)',
+          hi: 'rgb(var(--accent-hi) / <alpha-value>)',
         },
       },
       fontFamily: {

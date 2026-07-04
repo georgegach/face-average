@@ -4,7 +4,15 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/face-average/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0b0d10" />
+    <meta name="theme-color" content="#f6f7f9" />
+    <script>
+      // Apply saved theme before paint to avoid a flash. Light is the default.
+      try {
+        if (localStorage.getItem('facestudio-theme') === 'dark') {
+          document.documentElement.classList.add('dark')
+        }
+      } catch (e) {}
+    </script>
     <meta
       name="description"
       content="FaceStudio — average and morph faces fully in your browser. 100% local, your photos never leave your device."

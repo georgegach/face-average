@@ -17,9 +17,9 @@ export function FaceTray({ onWebcam }: { onWebcam: () => void }) {
   return (
     <div className="flex flex-col gap-3 h-full">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-300">Faces ({faces.length})</h2>
+        <h2 className="text-sm font-semibold text-content">Faces ({faces.length})</h2>
         {faces.length > 0 && (
-          <button className="text-xs text-slate-500 hover:text-slate-300" onClick={clearFaces}>
+          <button className="text-xs text-muted hover:text-content" onClick={clearFaces}>
             Clear all
           </button>
         )}
@@ -41,8 +41,8 @@ export function FaceTray({ onWebcam }: { onWebcam: () => void }) {
           drag ? 'border-accent bg-accent/5' : ''
         }`}
       >
-        <p className="text-sm text-slate-300">Drop faces or click</p>
-        <p className="text-xs text-slate-500 mt-1">JP/PNG · batch ok</p>
+        <p className="text-sm text-content">Drop faces or click</p>
+        <p className="text-xs text-muted mt-1">JP/PNG · batch ok</p>
         <button
           className="btn-ghost mt-3 text-xs py-1"
           onClick={(e) => {
@@ -62,7 +62,7 @@ export function FaceTray({ onWebcam }: { onWebcam: () => void }) {
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto flex flex-col gap-2 pr-1">
+      <div className="md:flex-1 overflow-y-auto flex flex-col gap-2 pr-1 max-h-[42vh] md:max-h-none">
         {faces.map((f) => (
           <div key={f.id} className="panel p-2 flex gap-2 items-start">
             <img
@@ -72,10 +72,10 @@ export function FaceTray({ onWebcam }: { onWebcam: () => void }) {
             />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1">
-                <span className="text-xs text-slate-200 truncate flex-1">{f.name}</span>
+                <span className="text-xs text-content truncate flex-1">{f.name}</span>
                 <button
                   title="Remove"
-                  className="text-slate-500 hover:text-red-400 text-xs"
+                  className="text-muted hover:text-red-400 text-xs"
                   onClick={() => removeFace(f.id)}
                 >
                   ✕
@@ -83,7 +83,7 @@ export function FaceTray({ onWebcam }: { onWebcam: () => void }) {
               </div>
               <div className="text-[10px] mt-0.5">
                 {f.detecting ? (
-                  <span className="text-accent">detecting…</span>
+                  <span className="text-accent-hi">detecting…</span>
                 ) : f.failed ? (
                   <span className="text-red-400">no face found</span>
                 ) : (
@@ -105,13 +105,13 @@ export function FaceTray({ onWebcam }: { onWebcam: () => void }) {
                   <button
                     title="Use as template shape"
                     onClick={() => setTemplate(templateId === f.id ? null : f.id)}
-                    className={`text-xs ${templateId === f.id ? 'text-accent' : 'text-slate-500 hover:text-slate-300'}`}
+                    className={`text-xs ${templateId === f.id ? 'text-accent-hi' : 'text-muted hover:text-content'}`}
                   >
                     ★
                   </button>
                   <button
                     onClick={() => toggleEnabled(f.id)}
-                    className={`text-xs ${f.enabled ? 'text-emerald-400' : 'text-slate-600'}`}
+                    className={`text-xs ${f.enabled ? 'text-emerald-400' : 'text-faint'}`}
                     title="Enable/disable"
                   >
                     ⏻
