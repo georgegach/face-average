@@ -7,7 +7,9 @@ async function ensure(wasmPath: string, modelPath: string) {
   if (landmarker) return landmarker
   const fileset = await FilesetResolver.forVisionTasks(wasmPath)
   landmarker = await FaceLandmarker.createFromOptions(fileset, {
-    baseOptions: { modelAssetPath: modelPath },
+    // CPU delegate: reliable in headless/worker contexts where WebGL may be
+    // unavailable; detection is fast enough for interactive use.
+    baseOptions: { modelAssetPath: modelPath, delegate: 'CPU' },
     runningMode: 'IMAGE',
     numFaces: 4,
     outputFaceBlendshapes: false,

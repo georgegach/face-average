@@ -23,6 +23,11 @@ async function canvasVariance(page: Page, testid: string): Promise<number> {
 }
 
 test('averages preset faces into a real image', async ({ page }) => {
+  page.on('console', (m) => console.log(`[browser:${m.type()}] ${m.text()}`))
+  page.on('pageerror', (e) => console.log(`[pageerror] ${e.message}`))
+  page.on('requestfailed', (r) =>
+    console.log(`[reqfail] ${r.url()} — ${r.failure()?.errorText}`),
+  )
   await page.goto('/')
   await expect(page.getByText('Blend faces into one')).toBeVisible()
 
