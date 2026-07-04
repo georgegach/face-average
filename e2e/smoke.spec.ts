@@ -55,8 +55,6 @@ test('morph mode renders and responds to the blend slider', async ({ page }) => 
   await expect(page.getByText('478 pts ✓').nth(1)).toBeVisible({ timeout: 90_000 })
 
   await page.getByRole('button', { name: 'Morph', exact: true }).click()
-  await page.waitForTimeout(1000)
-  console.log('[diag] body text after Morph click:\n' + (await page.locator('main').innerText()))
   await expect(page.getByTestId('morph-canvas')).toBeVisible({ timeout: 30_000 })
   await expect
     .poll(() => canvasVariance(page, 'morph-canvas'), { timeout: 30_000 })

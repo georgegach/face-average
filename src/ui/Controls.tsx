@@ -138,7 +138,9 @@ function AveragePanel() {
 }
 
 function MorphPanel() {
-  const faces = useStore((s) => s.faces.filter((f) => f.landmarks && !f.failed))
+  // Select the stable array, then filter in render — returning a fresh array
+  // from the selector would loop useSyncExternalStore (React #185).
+  const faces = useStore((s) => s.faces).filter((f) => f.landmarks && !f.failed)
   const morphA = useStore((s) => s.morphA)
   const morphB = useStore((s) => s.morphB)
   const setPair = useStore((s) => s.setMorphPair)
