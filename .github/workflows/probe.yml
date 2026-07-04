@@ -15,4 +15,4 @@ jobs:
       - run: bash scripts/fetch-models.sh
       - run: npx vite build
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test --config playwright.probe.config.ts probe/fetchdiag.spec.ts
+      - run: npx playwright test --config playwright.probe.config.ts probe/enhance.spec.ts

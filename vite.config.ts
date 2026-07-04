@@ -40,17 +40,10 @@ export default defineConfig({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
-          {
-            // Upscaler ONNX models loaded from HuggingFace / its CDN.
-            urlPattern: ({ url }) => /(^|\.)hf\.co$|huggingface\.co$/.test(url.hostname),
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'facestudio-upscalers',
-              expiration: { maxEntries: 6, maxAgeSeconds: 60 * 60 * 24 * 90 },
-              cacheableResponse: { statuses: [0, 200] },
-              rangeRequests: true,
-            },
-          },
+          // NOTE: HuggingFace upscaler downloads are deliberately NOT routed
+          // through the service worker. Workbox mishandles HF's 302 redirect and
+          // returns 405; letting the request hit the network directly works. The
+          // browser HTTP cache still avoids repeat downloads within a session.
         ],
       },
     }),
