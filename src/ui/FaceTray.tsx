@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { useStore } from '../state/store'
+import { Icon } from './Icon'
 
 export function FaceTray({ onWebcam }: { onWebcam: () => void }) {
   const faces = useStore((s) => s.faces)
@@ -50,7 +51,7 @@ export function FaceTray({ onWebcam }: { onWebcam: () => void }) {
             onWebcam()
           }}
         >
-          📷 Webcam
+          <Icon name="camera" size={14} /> Webcam
         </button>
         <input
           ref={inputRef}
@@ -75,10 +76,11 @@ export function FaceTray({ onWebcam }: { onWebcam: () => void }) {
                 <span className="text-xs text-content truncate flex-1">{f.name}</span>
                 <button
                   title="Remove"
-                  className="text-muted hover:text-red-400 text-xs"
+                  aria-label="Remove face"
+                  className="text-muted hover:text-red-400"
                   onClick={() => removeFace(f.id)}
                 >
-                  ✕
+                  <Icon name="close" size={13} />
                 </button>
               </div>
               <div className="text-[10px] mt-0.5">
@@ -87,7 +89,9 @@ export function FaceTray({ onWebcam }: { onWebcam: () => void }) {
                 ) : f.failed ? (
                   <span className="text-red-400">no face found</span>
                 ) : (
-                  <span className="text-emerald-400">478 pts ✓</span>
+                  <span className="text-emerald-400 inline-flex items-center gap-1">
+                    <Icon name="check" size={11} /> 478 pts
+                  </span>
                 )}
               </div>
               {mode === 'average' && !f.failed && (
@@ -104,17 +108,19 @@ export function FaceTray({ onWebcam }: { onWebcam: () => void }) {
                   />
                   <button
                     title="Use as template shape"
+                    aria-label="Use as template shape"
                     onClick={() => setTemplate(templateId === f.id ? null : f.id)}
-                    className={`text-xs ${templateId === f.id ? 'text-accent-hi' : 'text-muted hover:text-content'}`}
+                    className={templateId === f.id ? 'text-accent-hi' : 'text-muted hover:text-content'}
                   >
-                    ★
+                    <Icon name="star" size={14} filled={templateId === f.id} />
                   </button>
                   <button
                     onClick={() => toggleEnabled(f.id)}
-                    className={`text-xs ${f.enabled ? 'text-emerald-400' : 'text-faint'}`}
+                    className={f.enabled ? 'text-emerald-400' : 'text-faint'}
                     title="Enable/disable"
+                    aria-label="Enable or disable face"
                   >
-                    ⏻
+                    <Icon name="power" size={14} />
                   </button>
                 </div>
               )}

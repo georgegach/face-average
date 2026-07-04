@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useStore } from '../state/store'
 import { Slider } from './Slider'
 import { exportPng, downloadBlob } from '../engine/export'
@@ -46,8 +46,29 @@ function AveragePanel() {
   const runAverage = useStore((s) => s.runAverage)
   const computing = useStore((s) => s.computing)
   const result = useStore((s) => s.result)
-  const usable = useStore((s) => s.faces.filter((f) => f.enabled && f.landmarks && !f.failed).length)
+  const faces = useStore((s) => s.faces)
+  const usable = faces.filter((f) => f.enabled && f.landmarks && !f.failed).length
+  const hasResult = !!result
   const [adv, setAdv] = useState(false)
+
+  // Re-render the average automatically when any setting or per-face weight
+  // changes, but only after the user has produced a first result.
+  const sig = JSON.stringify([
+    settings.background,
+    settings.colorNormalize,
+    settings.templateId,
+    settings.outWidth,
+    settings.outHeight,
+    settings.eyeDistance.toFixed(3),
+    settings.eyeRatioY.toFixed(3),
+    faces.map((f) => `${f.id}:${f.weight}:${f.enabled}:${!!f.landmarks}`),
+  ])
+  useEffect(() => {
+    if (!hasResult) return
+    const t = setTimeout(() => runAverage(), 140)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sig])
 
   const doExport = async (scale: number) => {
     if (!result) return

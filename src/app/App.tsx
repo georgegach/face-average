@@ -5,6 +5,7 @@ import { Stage } from '../ui/Stage'
 import { Controls } from '../ui/Controls'
 import { WebcamModal } from '../ui/Webcam'
 import { PresetGallery } from '../ui/PresetGallery'
+import { Icon } from '../ui/Icon'
 import { getTheme, setTheme, type Theme } from '../ui/theme'
 
 const MODES: [Mode, string][] = [
@@ -31,7 +32,7 @@ export default function App() {
       <header className="sticky top-0 z-20 bg-bg/90 backdrop-blur border-b border-edge/70">
         <div className="flex items-center gap-3 px-3 sm:px-4 py-2.5">
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-accent-hi text-xl">◉</span>
+            <Icon name="logo" size={22} className="text-accent-hi" />
             <span className="font-semibold tracking-tight">FaceStudio</span>
           </div>
           <div className="flex-1" />
@@ -44,9 +45,9 @@ export default function App() {
             onClick={toggleTheme}
             title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             aria-label="Toggle theme"
-            className="text-muted hover:text-content text-base shrink-0 leading-none"
+            className="text-muted hover:text-content shrink-0 leading-none"
           >
-            {theme === 'dark' ? '☀️' : '🌙'}
+            <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />
           </button>
           <a
             href="https://github.com/georgegach/face-average"

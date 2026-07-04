@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../state/store'
+import { Icon } from './Icon'
 
 export function WebcamModal({ onClose }: { onClose: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -44,8 +45,8 @@ export function WebcamModal({ onClose }: { onClose: () => void }) {
       <div className="panel p-4 max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold">Webcam capture</h3>
-          <button className="text-muted hover:text-content" onClick={onClose}>
-            ✕
+          <button className="text-muted hover:text-content" onClick={onClose} aria-label="Close">
+            <Icon name="close" size={16} />
           </button>
         </div>
         {error ? (

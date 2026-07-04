@@ -5,11 +5,11 @@ const B = import.meta.env.BASE_URL
 export const MODELS = {
   landmarkerTask: `${B}models/face_landmarker.task`,
   mediapipeWasm: `${B}models/wasm`,
-  faceParsing: `${B}models/face_parsing_bisenet.onnx`,
+  ortWasm: `${B}models/ort/`,
   upscalers: {
-    photo: `${B}models/realesrgan-x4-photo.onnx`,
-    anime: `${B}models/realesrgan-x4-anime.onnx`,
-    general: `${B}models/realesr-general-x4v3.onnx`,
+    photo: `${B}models/upscale-photo.onnx`,
+    anime: `${B}models/upscale-anime.onnx`,
+    general: `${B}models/upscale-general.onnx`,
   },
 } as const
 

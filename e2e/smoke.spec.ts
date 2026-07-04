@@ -35,7 +35,7 @@ test('averages preset faces into a real image', async ({ page }) => {
   await page.getByRole('button', { name: /US Presidents/ }).click()
 
   // Wait until at least 4 faces have been detected (478 pts badge).
-  await expect(page.getByText('478 pts ✓').nth(3)).toBeVisible({ timeout: 90_000 })
+  await expect(page.getByText('478 pts').nth(3)).toBeVisible({ timeout: 90_000 })
 
   // Render the average.
   await page.getByRole('button', { name: /Average \d+ faces/ }).click()
@@ -52,7 +52,7 @@ test('morph mode renders and responds to the blend slider', async ({ page }) => 
   page.on('pageerror', (e) => console.log(`[pageerror] ${e.message}`))
   await page.goto('/')
   await page.getByRole('button', { name: /US Presidents/ }).click()
-  await expect(page.getByText('478 pts ✓').nth(1)).toBeVisible({ timeout: 90_000 })
+  await expect(page.getByText('478 pts').nth(1)).toBeVisible({ timeout: 90_000 })
 
   await page.getByRole('button', { name: 'Morph', exact: true }).click()
   await expect(page.getByTestId('morph-canvas')).toBeVisible({ timeout: 30_000 })

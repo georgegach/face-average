@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useStore } from '../state/store'
+import { Icon } from './Icon'
 
 interface Gallery {
   id: string
@@ -36,7 +37,9 @@ export function PresetGallery({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className="max-w-md text-center">
-      <div className="text-5xl mb-3">🎭</div>
+      <div className="flex justify-center mb-3 text-accent-hi">
+        <Icon name="faces" size={56} />
+      </div>
       <h2 className="text-xl font-semibold text-content">Blend faces into one</h2>
       <p className="text-sm text-muted mt-2 mb-5">
         Drop a few portraits on the left to average them, or start with a preset. Everything runs in

@@ -7,5 +7,6 @@ dist-ssr
 public/models/*.task
 public/models/*.onnx
 public/models/wasm
+public/models/ort
 test-results
 playwright-report

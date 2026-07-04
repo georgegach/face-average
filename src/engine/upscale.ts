@@ -9,6 +9,9 @@ const SCALE = 4
 const TILE = 192
 const OVERLAP = 16
 
+// Load ORT's own wasm/mjs assets same-origin (self-hosted), not from a CDN.
+ort.env.wasm.wasmPaths = MODELS.ortWasm
+
 const sessions = new Map<UpscalerKind, Promise<ort.InferenceSession>>()
 
 function providers(): string[] {

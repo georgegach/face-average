@@ -43,25 +43,31 @@ else
   exit 1
 fi
 
+# ---- onnxruntime-web runtime (wasm/mjs) -----------------------------------
+# Self-host so ort loads its wasm same-origin (set via env.wasm.wasmPaths).
+ORT_SRC="$ROOT/node_modules/onnxruntime-web/dist"
+if [ -d "$ORT_SRC" ]; then
+  mkdir -p "$OUT/ort"
+  cp -f "$ORT_SRC"/*.wasm "$OUT/ort/" 2>/dev/null || true
+  cp -f "$ORT_SRC"/*.mjs "$OUT/ort/" 2>/dev/null || true
+  echo "copied: onnxruntime-web runtime assets"
+else
+  echo "!! onnxruntime-web dist not found — run npm ci first" >&2
+  exit 1
+fi
+
 # ---- Face landmarker (REQUIRED) -------------------------------------------
 fetch \
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task" \
   "$OUT/face_landmarker.task" "-" "required" || exit 1
 
-# ---- Optional ONNX models (lazy features: parsing + upscalers) ------------
-# Pinned mirrors; if any is unreachable the related in-app feature disables
-# gracefully. Replace URLs / add sha256 pins as better-hosted exports appear.
-fetch \
-  "https://huggingface.co/onnx-community/face-parsing-bisenet/resolve/main/model.onnx" \
-  "$OUT/face_parsing_bisenet.onnx" "-" "optional"
-
-fetch \
-  "https://huggingface.co/Xenova/real-esrgan-x4plus/resolve/main/onnx/model.onnx" \
-  "$OUT/realesrgan-x4-photo.onnx" "-" "optional"
-
-fetch \
-  "https://huggingface.co/Xenova/real-esrgan-x4plus-anime/resolve/main/onnx/model.onnx" \
-  "$OUT/realesrgan-x4-anime.onnx" "-" "optional"
+# ---- Optional ONNX upscalers (lazy Enhance feature) -----------------------
+# Standard 4x ESRGAN models (dynamic shape, NCHW float 0..1 in/out). If a
+# mirror is unreachable the related variant disables gracefully in-app.
+UP="https://huggingface.co/yuvraj108c/ComfyUI-Upscaler-Onnx/resolve/main"
+fetch "$UP/4x-UltraSharpV2_Lite.onnx" "$OUT/upscale-photo.onnx"   "-" "optional"
+fetch "$UP/4x-ClearRealityV1.onnx"    "$OUT/upscale-general.onnx" "-" "optional"
+fetch "$UP/4x-AnimeSharp.onnx"        "$OUT/upscale-anime.onnx"   "-" "optional"
 
 echo "== model manifest =="
-ls -la "$OUT"
+ls -la "$OUT" "$OUT/ort" 2>/dev/null
