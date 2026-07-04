@@ -69,8 +69,11 @@ function MorphStage() {
   const [busy, setBusy] = useState(false)
   const [boomerang, setBoomerang] = useState(true)
 
-  const faceA = faces.find((f) => f.id === morphA && f.landmarks && !f.failed)
-  const faceB = faces.find((f) => f.id === morphB && f.landmarks && !f.failed)
+  // Fall back to the first two detected faces if the selected pair is unset or
+  // points at a face whose detection failed.
+  const valid = faces.filter((f) => f.landmarks && !f.failed)
+  const faceA = valid.find((f) => f.id === morphA) ?? valid[0]
+  const faceB = valid.find((f) => f.id === morphB && f.id !== faceA?.id) ?? valid.find((f) => f.id !== faceA?.id)
 
   const session = useMemo(() => {
     if (!faceA || !faceB) return null
