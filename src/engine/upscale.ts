@@ -4,7 +4,7 @@
 // feature stays disabled rather than breaking the app.
 import * as ort from 'onnxruntime-web'
 import { MODELS, type UpscalerKind } from './models'
-import { fetchWithProgress } from './download'
+import { fetchWithProgressCached } from './download'
 
 const SCALE = 4
 const TILE = 192
@@ -30,7 +30,7 @@ async function getSession(
   if (!s) {
     ort.env.wasm.numThreads = 1 // GitHub Pages has no cross-origin isolation
     s = (async () => {
-      const bytes = await fetchWithProgress(MODELS.upscalers[kind], onDownload)
+      const bytes = await fetchWithProgressCached(MODELS.upscalers[kind], onDownload)
       return ort.InferenceSession.create(bytes, { executionProviders: providers() })
     })()
     sessions.set(kind, s)

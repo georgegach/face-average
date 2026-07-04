@@ -41,9 +41,9 @@ export default defineConfig({
             },
           },
           // NOTE: HuggingFace upscaler downloads are deliberately NOT routed
-          // through the service worker. Workbox mishandles HF's 302 redirect and
-          // returns 405; letting the request hit the network directly works. The
-          // browser HTTP cache still avoids repeat downloads within a session.
+          // through Workbox — it mishandles HF's 302 redirect and returns 405.
+          // Those models are cached in app code via the Cache API instead
+          // (see engine/download.ts:fetchWithProgressCached).
         ],
       },
     }),
