@@ -1,48 +1,70 @@
+import { FilesetResolver, FaceLandmarker } from '@mediapipe/tasks-vision'
 import { MODELS } from './models'
 import type { Landmarks } from './types'
 
-// Main-thread client for the landmark worker. Keeps a single worker alive and
-// serialises requests via incrementing ids.
-let worker: Worker | null = null
-let nextId = 1
-const pending = new Map<
-  number,
-  { resolve: (l: Landmarks | null) => void; reject: (e: unknown) => void }
->()
+// MediaPipe's WASM loader relies on importScripts, which is unavailable in ES
+// module workers, so the landmarker runs on the main thread. Detection is fast
+// (CPU delegate) and infrequent enough that this keeps the UI responsive.
+let landmarkerPromise: Promise<FaceLandmarker> | null = null
 
-function getWorker(): Worker {
-  if (worker) return worker
-  worker = new Worker(new URL('../workers/landmarks.worker.ts', import.meta.url), {
-    type: 'module',
-  })
-  worker.onmessage = (e: MessageEvent) => {
-    const { id, ok, points, box, error } = e.data
-    const p = pending.get(id)
-    if (!p) return
-    pending.delete(id)
-    if (error) p.reject(new Error(error))
-    else if (!ok) p.resolve(null)
-    else p.resolve({ points, box })
+async function getLandmarker(): Promise<FaceLandmarker> {
+  if (!landmarkerPromise) {
+    landmarkerPromise = (async () => {
+      const fileset = await FilesetResolver.forVisionTasks(MODELS.mediapipeWasm)
+      return FaceLandmarker.createFromOptions(fileset, {
+        baseOptions: { modelAssetPath: MODELS.landmarkerTask, delegate: 'CPU' },
+        runningMode: 'IMAGE',
+        numFaces: 4,
+        outputFaceBlendshapes: false,
+        outputFacialTransformationMatrixes: false,
+      })
+    })()
   }
-  return worker
+  return landmarkerPromise
 }
 
 export async function detectLandmarks(bitmap: ImageBitmap): Promise<Landmarks | null> {
-  const w = getWorker()
-  const id = nextId++
-  // The worker needs its own copy of the bitmap; clone via createImageBitmap.
-  const clone = await createImageBitmap(bitmap)
-  return new Promise((resolve, reject) => {
-    pending.set(id, { resolve, reject })
-    w.postMessage(
-      {
-        id,
-        type: 'detect',
-        bitmap: clone,
-        wasmPath: MODELS.mediapipeWasm,
-        modelPath: MODELS.landmarkerTask,
-      },
-      [clone],
-    )
-  })
+  const lm = await getLandmarker()
+  const w = bitmap.width
+  const h = bitmap.height
+  const res = lm.detect(bitmap)
+  if (!res.faceLandmarks || res.faceLandmarks.length === 0) return null
+
+  // Largest face by bounding-box area.
+  let best = res.faceLandmarks[0]
+  let bestArea = -1
+  for (const face of res.faceLandmarks) {
+    let minX = 1,
+      minY = 1,
+      maxX = 0,
+      maxY = 0
+    for (const p of face) {
+      if (p.x < minX) minX = p.x
+      if (p.y < minY) minY = p.y
+      if (p.x > maxX) maxX = p.x
+      if (p.y > maxY) maxY = p.y
+    }
+    const area = (maxX - minX) * (maxY - minY)
+    if (area > bestArea) {
+      bestArea = area
+      best = face
+    }
+  }
+
+  const points = new Float32Array(best.length * 2)
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity
+  for (let i = 0; i < best.length; i++) {
+    const x = best[i].x * w
+    const y = best[i].y * h
+    points[i * 2] = x
+    points[i * 2 + 1] = y
+    if (x < minX) minX = x
+    if (y < minY) minY = y
+    if (x > maxX) maxX = x
+    if (y > maxY) maxY = y
+  }
+  return { points, box: { x: minX, y: minY, width: maxX - minX, height: maxY - minY } }
 }

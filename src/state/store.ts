@@ -72,7 +72,8 @@ export const useStore = create<StoreState>((set, get) => ({
           f.id === face.id ? { ...f, landmarks: lm, detecting: false, failed: !lm } : f,
         ),
       }))
-    } catch {
+    } catch (err) {
+      console.error('landmark detection failed', err)
       set((s) => ({
         faces: s.faces.map((f) => (f.id === face.id ? { ...f, detecting: false, failed: true } : f)),
       }))
