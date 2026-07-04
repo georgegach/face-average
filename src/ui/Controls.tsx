@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useStore } from '../state/store'
 import { Slider } from './Slider'
 import { exportPng, downloadBlob } from '../engine/export'
-import { upscale, isUpscalerAvailable } from '../engine/upscale'
+import { upscale, type UpscaleStage } from '../engine/upscale'
 import type { UpscalerKind } from '../engine/models'
 
 export function Controls() {
@@ -206,19 +206,19 @@ function EnhancePanel() {
   const setResult = useStore((s) => s.setResult)
   const [kind, setKind] = useState<UpscalerKind>('photo')
   const [progress, setProgress] = useState<number | null>(null)
+  const [stage, setStage] = useState<UpscaleStage>('download')
   const [msg, setMsg] = useState<string | null>(null)
 
   const run = async () => {
     if (!result) return
     setMsg(null)
-    if (!(await isUpscalerAvailable(kind))) {
-      setMsg('Could not reach the upscaler model — check your connection and retry.')
-      return
-    }
-    setMsg('Loading model & upscaling… first run downloads the model.')
+    setStage('download')
     setProgress(0)
     try {
-      const up = await upscale(result, kind, (f) => setProgress(f))
+      const up = await upscale(result, kind, (st, f) => {
+        setStage(st)
+        setProgress(f)
+      })
       setResult(up)
       setMsg('Upscaled 4×.')
     } catch (e) {
@@ -252,8 +252,18 @@ function EnhancePanel() {
         </div>
       </div>
       <button className="btn-accent" disabled={!result || progress !== null} onClick={run}>
-        {progress !== null ? `Upscaling ${Math.round(progress * 100)}%` : 'Upscale 4×'}
+        {progress !== null
+          ? `${stage === 'download' ? 'Downloading model' : 'Upscaling'} ${Math.round(progress * 100)}%`
+          : 'Upscale 4×'}
       </button>
+      {progress !== null && (
+        <div className="h-1.5 rounded-full bg-surface3 overflow-hidden">
+          <div
+            className="h-full bg-accent transition-[width] duration-150"
+            style={{ width: `${Math.round(progress * 100)}%` }}
+          />
+        </div>
+      )}
       {msg && <p className="text-xs text-muted">{msg}</p>}
       <p className="text-[11px] text-faint">
         Runs on-device via ONNX (WebGPU when available). Large images may take a while.
