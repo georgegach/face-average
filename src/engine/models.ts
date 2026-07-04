@@ -2,14 +2,19 @@
 // production and '/' in dev, so these resolve same-origin in both.
 const B = import.meta.env.BASE_URL
 
+// Upscaler ONNX models are large (35–72 MB) and would blow past GitHub Pages'
+// deployment size, so they load at runtime from HuggingFace (CORS-enabled) and
+// are cached by the service worker. Everything else is self-hosted.
+const HF = 'https://huggingface.co/yuvraj108c/ComfyUI-Upscaler-Onnx/resolve/main'
+
 export const MODELS = {
   landmarkerTask: `${B}models/face_landmarker.task`,
   mediapipeWasm: `${B}models/wasm`,
   ortWasm: `${B}models/ort/`,
   upscalers: {
-    photo: `${B}models/upscale-photo.onnx`,
-    anime: `${B}models/upscale-anime.onnx`,
-    general: `${B}models/upscale-general.onnx`,
+    photo: `${HF}/4x-UltraSharpV2_Lite.onnx`,
+    anime: `${HF}/4x-AnimeSharp.onnx`,
+    general: `${HF}/4x-ClearRealityV1.onnx`,
   },
 } as const
 

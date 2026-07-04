@@ -61,13 +61,9 @@ fetch \
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task" \
   "$OUT/face_landmarker.task" "-" "required" || exit 1
 
-# ---- Optional ONNX upscalers (lazy Enhance feature) -----------------------
-# Standard 4x ESRGAN models (dynamic shape, NCHW float 0..1 in/out). If a
-# mirror is unreachable the related variant disables gracefully in-app.
-UP="https://huggingface.co/yuvraj108c/ComfyUI-Upscaler-Onnx/resolve/main"
-fetch "$UP/4x-UltraSharpV2_Lite.onnx" "$OUT/upscale-photo.onnx"   "-" "optional"
-fetch "$UP/4x-ClearRealityV1.onnx"    "$OUT/upscale-general.onnx" "-" "optional"
-fetch "$UP/4x-AnimeSharp.onnx"        "$OUT/upscale-anime.onnx"   "-" "optional"
+# Note: ONNX upscalers are NOT bundled — they exceed GitHub Pages' deploy size
+# and instead load at runtime from HuggingFace (see src/engine/models.ts),
+# cached by the service worker.
 
 echo "== model manifest =="
 ls -la "$OUT" "$OUT/ort" 2>/dev/null

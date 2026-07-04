@@ -40,6 +40,17 @@ export default defineConfig({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
+          {
+            // Upscaler ONNX models loaded from HuggingFace / its CDN.
+            urlPattern: ({ url }) => /(^|\.)hf\.co$|huggingface\.co$/.test(url.hostname),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'facestudio-upscalers',
+              expiration: { maxEntries: 6, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              cacheableResponse: { statuses: [0, 200] },
+              rangeRequests: true,
+            },
+          },
         ],
       },
     }),

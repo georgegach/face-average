@@ -34,9 +34,10 @@ async function getSession(kind: UpscalerKind): Promise<ort.InferenceSession> {
 }
 
 export async function isUpscalerAvailable(kind: UpscalerKind): Promise<boolean> {
+  // Ranged GET (1 byte) — HEAD isn't reliable through HuggingFace's redirect.
   try {
-    const res = await fetch(MODELS.upscalers[kind], { method: 'HEAD' })
-    return res.ok
+    const res = await fetch(MODELS.upscalers[kind], { headers: { Range: 'bytes=0-0' } })
+    return res.ok || res.status === 206
   } catch {
     return false
   }

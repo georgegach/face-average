@@ -212,9 +212,10 @@ function EnhancePanel() {
     if (!result) return
     setMsg(null)
     if (!(await isUpscalerAvailable(kind))) {
-      setMsg('This upscaler model is not bundled in the current deployment.')
+      setMsg('Could not reach the upscaler model — check your connection and retry.')
       return
     }
+    setMsg('Loading model & upscaling… first run downloads the model.')
     setProgress(0)
     try {
       const up = await upscale(result, kind, (f) => setProgress(f))
