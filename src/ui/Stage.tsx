@@ -5,6 +5,7 @@ import { MorphSession, morphSchedule } from '../engine/morph'
 import { exportVideo, exportGif, downloadBlob } from '../engine/export'
 import { PresetGallery } from './PresetGallery'
 import { Slider } from './Slider'
+import { Icon } from './Icon'
 
 export function Stage() {
   const mode = useStore((s) => s.mode)
@@ -17,17 +18,17 @@ export function Stage() {
 function ProgressOverlay({ fallback }: { fallback: string }) {
   const progress = useStore((s) => s.progress)
   return (
-    <div className="absolute inset-0 grid place-items-center bg-bg/70 z-10">
-      <div className="panel px-4 py-3 w-64 flex flex-col gap-2">
-        <div className="text-sm text-accent-hi">{progress?.label ?? fallback}</div>
-        <div className="h-1.5 rounded-full bg-surface3 overflow-hidden">
+    <div className="absolute inset-0 grid place-items-center bg-bg/50 backdrop-blur-sm z-10">
+      <div className="panel px-5 py-4 w-72 flex flex-col gap-2.5">
+        <div className="text-sm font-medium text-content">{progress?.label ?? fallback}</div>
+        <div className="h-1 rounded-full bg-surface3 overflow-hidden">
           {progress && progress.frac >= 0 ? (
             <div
-              className="h-full bg-accent transition-[width] duration-150"
+              className="h-full bg-accent transition-[width] duration-150 rounded-full"
               style={{ width: `${Math.round(Math.min(1, progress.frac) * 100)}%` }}
             />
           ) : (
-            <div className="h-full w-1/3 bg-accent animate-pulse" />
+            <div className="h-full w-1/3 bg-accent animate-pulse rounded-full" />
           )}
         </div>
       </div>
@@ -76,19 +77,22 @@ function ResultStage() {
           className="max-w-full max-h-full rounded-2xl shadow-glass object-contain"
         />
       ) : mode === 'replace' ? (
-        <div className="text-muted text-sm text-center max-w-xs">
+        <div className="card px-5 py-4 text-muted text-sm text-center max-w-xs">
+          <Icon name="swap" size={22} className="mx-auto mb-2 text-accent" />
           Drop a target photo in the right panel — the face in it gets replaced with your
           sources.
         </div>
       ) : mode === 'edit' ? (
-        <div className="text-muted text-sm text-center max-w-xs">
+        <div className="card px-5 py-4 text-muted text-sm text-center max-w-xs">
+          <Icon name="wand" size={22} className="mx-auto mb-2 text-accent" />
           Pick a face and adjust the tools on the right, then press{' '}
-          <span className="text-accent-hi">Apply edits</span>.
+          <span className="text-accent-hi font-medium">Apply edits</span>.
         </div>
       ) : (
-        <div className="text-muted text-sm text-center">
+        <div className="card px-5 py-4 text-muted text-sm text-center max-w-xs">
+          <Icon name="faces" size={22} className="mx-auto mb-2 text-accent" />
           {faces.length} face{faces.length > 1 ? 's' : ''} loaded — press{' '}
-          <span className="text-accent-hi">Average</span> to render.
+          <span className="text-accent-hi font-medium">Average</span> to render.
         </div>
       )}
     </div>
@@ -160,10 +164,11 @@ function MorphStage() {
 
   if (!faceA || !faceB) {
     return (
-      <div className="flex-1 grid place-items-center p-6 text-center text-muted text-sm">
-        <div>
-          <p>Pick two faces to morph.</p>
-          <p className="text-muted mt-1">
+      <div className="flex-1 grid place-items-center p-6">
+        <div className="card px-5 py-4 text-muted text-sm text-center max-w-xs">
+          <Icon name="blend" size={22} className="mx-auto mb-2 text-accent" />
+          <p className="text-content font-medium">Pick two faces to morph</p>
+          <p className="mt-1">
             Add at least two detected faces, then choose A and B in the right panel.
           </p>
         </div>

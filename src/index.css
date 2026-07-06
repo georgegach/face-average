@@ -2,39 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Light theme is the default; .dark on <html> switches to dark. */
+/* ------------------------------------------------------------------ *
+ *  Liquid Glass design tokens — Apple-style palette.                 *
+ *  Light theme is the default; .dark on <html> switches to dark.     *
+ * ------------------------------------------------------------------ */
 :root {
   color-scheme: light;
-  --bg: 246 247 249;
+  --bg: 240 242 247;
   --surface: 255 255 255;
-  --surface-2: 238 241 245;
-  --surface-3: 226 230 236;
-  --edge: 215 220 227;
-  --content: 26 31 39;
-  --muted: 100 116 139;
-  --faint: 148 163 184;
-  --accent: 8 145 178;
-  --accent-soft: 6 182 212;
+  --surface-2: 232 232 237;
+  --surface-3: 217 217 222;
+  --edge: 209 209 214;
+  --content: 29 29 31;
+  --muted: 110 110 115;
+  --faint: 174 174 178;
+  --accent: 0 122 255;
+  --accent-soft: 51 153 255;
   --accent-ink: 255 255 255;
-  --accent-hi: 14 116 144;
+  --accent-hi: 0 102 214;
   --shadow: 15 23 42;
+  /* glass material */
+  --glass-hi: 255 255 255;
+  --glass-from: rgb(255 255 255 / 0.66);
+  --glass-to: rgb(255 255 255 / 0.5);
+  --glass-edge: rgb(255 255 255 / 0.55);
+  --glass-shadow: 0 16px 40px rgb(15 23 42 / 0.1), 0 2px 8px rgb(15 23 42 / 0.05);
 }
 
 :root.dark {
   color-scheme: dark;
-  --bg: 11 13 16;
-  --surface: 18 21 26;
-  --surface-2: 26 31 39;
-  --surface-3: 36 43 53;
-  --edge: 36 43 53;
-  --content: 226 232 240;
-  --muted: 148 163 184;
-  --faint: 71 85 105;
-  --accent: 34 211 238;
-  --accent-soft: 103 232 249;
-  --accent-ink: 11 13 16;
-  --accent-hi: 34 211 238;
+  --bg: 10 10 14;
+  --surface: 28 28 30;
+  --surface-2: 44 44 46;
+  --surface-3: 58 58 60;
+  --edge: 58 58 60;
+  --content: 245 245 247;
+  --muted: 161 161 166;
+  --faint: 99 99 102;
+  --accent: 10 132 255;
+  --accent-soft: 64 156 255;
+  --accent-ink: 255 255 255;
+  --accent-hi: 100 174 255;
   --shadow: 0 0 0;
+  --glass-hi: 255 255 255;
+  --glass-from: rgb(40 42 48 / 0.6);
+  --glass-to: rgb(26 28 33 / 0.6);
+  --glass-edge: rgb(255 255 255 / 0.12);
+  --glass-shadow: 0 16px 48px rgb(0 0 0 / 0.55), 0 2px 8px rgb(0 0 0 / 0.35);
 }
 
 html,
@@ -58,40 +72,163 @@ body {
   margin: 0;
 }
 
+/* Ambient colour wash behind the glass — what the panels "refract". */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(640px 420px at 12% 8%, rgb(10 132 255 / 0.14), transparent 70%),
+    radial-gradient(720px 480px at 88% 16%, rgb(191 90 242 / 0.12), transparent 70%),
+    radial-gradient(880px 620px at 50% 105%, rgb(90 200 250 / 0.14), transparent 70%),
+    rgb(var(--bg));
+}
+:root.dark body::before {
+  background:
+    radial-gradient(640px 420px at 12% 8%, rgb(10 132 255 / 0.16), transparent 70%),
+    radial-gradient(720px 480px at 88% 16%, rgb(191 90 242 / 0.13), transparent 70%),
+    radial-gradient(880px 620px at 50% 105%, rgb(100 210 255 / 0.1), transparent 70%),
+    rgb(var(--bg));
+}
+
 @layer components {
+  /* Primary Liquid Glass material: translucent, blurred & saturated, with a
+     specular top edge. Used for all floating panels. */
   .panel {
-    @apply bg-surface/95 border border-edge rounded-2xl backdrop-blur;
-    box-shadow: 0 8px 32px rgb(var(--shadow) / 0.12);
+    @apply rounded-3xl;
+    border: 1px solid var(--glass-edge);
+    background: linear-gradient(var(--glass-from), var(--glass-to));
+    -webkit-backdrop-filter: blur(24px) saturate(1.8);
+    backdrop-filter: blur(24px) saturate(1.8);
+    box-shadow: inset 0 1px 0 rgb(var(--glass-hi) / 0.35), var(--glass-shadow);
+  }
+  /* Inner grouping surface (no blur — cheap, and reads as a layer above glass). */
+  .card {
+    @apply rounded-2xl border border-edge/50 bg-surface2/50;
+  }
+  .dropzone {
+    @apply rounded-2xl border border-dashed border-edge cursor-pointer transition-colors;
+    background: rgb(var(--surface-2) / 0.3);
+  }
+  .dropzone:hover {
+    @apply border-accent/60;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium
-      transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium
+      transition-all duration-150 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed
+      disabled:active:scale-100;
   }
   .btn-accent {
     @apply btn bg-accent text-accent-ink hover:bg-accent-soft;
+    box-shadow: 0 4px 14px rgb(var(--accent) / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.25);
   }
   .btn-ghost {
-    @apply btn bg-surface2 text-content hover:bg-surface3;
+    @apply btn text-content;
+    background: rgb(120 120 128 / 0.14);
   }
-  .tab {
-    @apply px-4 py-2 rounded-xl text-sm font-medium transition-colors text-muted hover:text-content;
+  .btn-ghost:hover {
+    background: rgb(120 120 128 / 0.22);
   }
-  .tab-active {
-    @apply bg-accent/15 text-accent-hi;
+  /* iOS-style segmented control. */
+  .seg {
+    @apply flex rounded-full p-1 gap-0.5;
+    background: rgb(120 120 128 / 0.12);
+  }
+  .dark .seg {
+    background: rgb(120 120 128 / 0.2);
+  }
+  .seg-item {
+    @apply flex items-center justify-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium
+      text-muted transition-all duration-150 whitespace-nowrap;
+  }
+  .seg-item:hover {
+    @apply text-content;
+  }
+  .seg-item-active {
+    @apply text-content;
+    background: rgb(var(--surface) / 0.95);
+    box-shadow: 0 2px 8px rgb(var(--shadow) / 0.16), inset 0 1px 0 rgb(255 255 255 / 0.4);
+  }
+  .dark .seg-item-active {
+    background: rgb(255 255 255 / 0.16);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.4), inset 0 1px 0 rgb(255 255 255 / 0.12);
   }
   .label {
     @apply text-xs uppercase tracking-wide text-muted font-semibold;
   }
+  /* Small status pill (e.g. the privacy badge). */
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium;
+    background: rgb(120 120 128 / 0.12);
+  }
 }
 
+/* iOS-style switch — every checkbox in the app is a toggle. */
+input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 40px;
+  height: 24px;
+  flex: none;
+  border-radius: 9999px;
+  background: rgb(120 120 128 / 0.28);
+  transition: background 0.2s ease;
+  cursor: pointer;
+}
+input[type='checkbox']::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+  transition: transform 0.2s ease;
+}
+input[type='checkbox']:checked {
+  background: rgb(var(--accent));
+}
+input[type='checkbox']:checked::before {
+  transform: translateX(16px);
+}
+
+/* iOS-style slider: filled track (via --fill set inline) + white round thumb. */
 input[type='range'] {
-  @apply appearance-none h-1.5 rounded-full bg-surface3 outline-none;
+  @apply appearance-none h-1 rounded-full outline-none;
+  background: linear-gradient(
+    to right,
+    rgb(var(--accent)) var(--fill, 0%),
+    rgb(120 120 128 / 0.24) var(--fill, 0%)
+  );
 }
 input[type='range']::-webkit-slider-thumb {
-  @apply appearance-none w-4 h-4 rounded-full bg-accent cursor-pointer;
+  @apply appearance-none w-[18px] h-[18px] rounded-full cursor-pointer;
+  background: #fff;
+  border: 0.5px solid rgb(0 0 0 / 0.05);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
 }
 input[type='range']::-moz-range-thumb {
-  @apply w-4 h-4 rounded-full bg-accent cursor-pointer border-0;
+  @apply w-[18px] h-[18px] rounded-full cursor-pointer border-0;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
+}
+input[type='range']:disabled {
+  opacity: 0.4;
+}
+
+select {
+  @apply rounded-xl border border-edge/60;
+  background-color: rgb(var(--surface-2) / 0.6);
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--accent) / 0.7);
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {

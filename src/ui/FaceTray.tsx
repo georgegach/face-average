@@ -1,6 +1,28 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type CSSProperties } from 'react'
 import { useStore } from '../state/store'
 import { Icon } from './Icon'
+import { PresetGallery } from './PresetGallery'
+
+function MiniProgress({ label, frac, count }: { label: string; frac: number; count?: string }) {
+  return (
+    <div className="card p-2">
+      <div className="flex justify-between text-[10px] text-muted mb-1">
+        <span>{label}</span>
+        {count ? <span>{count}</span> : frac >= 0 && <span>{Math.round(frac * 100)}%</span>}
+      </div>
+      <div className="h-1 rounded-full bg-surface3 overflow-hidden">
+        {frac < 0 ? (
+          <div className="h-full w-1/3 bg-accent animate-pulse" />
+        ) : (
+          <div
+            className="h-full bg-accent transition-[width] duration-150 rounded-full"
+            style={{ width: `${Math.round(frac * 100)}%` }}
+          />
+        )}
+      </div>
+    </div>
+  )
+}
 
 export function FaceTray({
   onWebcam,
@@ -25,8 +47,13 @@ export function FaceTray({
 
   return (
     <div className="flex flex-col gap-3 h-full">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-content">Faces ({faces.length})</h2>
+      <div className="flex items-center justify-between px-1">
+        <h2 className="text-sm font-semibold text-content flex items-center gap-2">
+          Faces
+          {faces.length > 0 && (
+            <span className="pill !px-2 !py-0.5 text-muted tabular-nums">{faces.length}</span>
+          )}
+        </h2>
         {faces.length > 0 && (
           <button className="text-xs text-muted hover:text-content" onClick={clearFaces}>
             Clear all
@@ -46,20 +73,19 @@ export function FaceTray({
           addFiles(e.dataTransfer.files)
         }}
         onClick={() => inputRef.current?.click()}
-        className={`panel border-dashed cursor-pointer text-center py-6 px-3 transition-colors ${
-          drag ? 'border-accent bg-accent/5' : ''
-        }`}
+        className={`dropzone text-center py-5 px-3 ${drag ? 'border-accent bg-accent/5' : ''}`}
       >
-        <p className="text-sm text-content">Drop faces or click</p>
-        <p className="text-xs text-muted mt-1">JP/PNG · batch ok</p>
+        <Icon name="upload" size={20} className="mx-auto text-accent mb-1.5" />
+        <p className="text-sm font-medium text-content">Add faces</p>
+        <p className="text-xs text-muted mt-0.5">Drop images or click · JPG/PNG · batch OK</p>
         <button
-          className="btn-ghost mt-3 text-xs py-1"
+          className="btn-ghost mt-3 text-xs py-1.5"
           onClick={(e) => {
             e.stopPropagation()
             onWebcam()
           }}
         >
-          <Icon name="camera" size={14} /> Webcam
+          <Icon name="camera" size={14} /> Use webcam
         </button>
         <input
           ref={inputRef}
@@ -72,52 +98,33 @@ export function FaceTray({
       </div>
 
       {modelLoad.loading && (
-        <div className="panel p-2">
-          <div className="flex justify-between text-[10px] text-muted mb-1">
-            <span>{modelLoad.frac < 0 ? 'Preparing face engine…' : 'Downloading face model…'}</span>
-            {modelLoad.frac >= 0 && <span>{Math.round(modelLoad.frac * 100)}%</span>}
-          </div>
-          <div className="h-1.5 rounded-full bg-surface3 overflow-hidden">
-            {modelLoad.frac < 0 ? (
-              <div className="h-full w-1/3 bg-accent animate-pulse" />
-            ) : (
-              <div
-                className="h-full bg-accent transition-[width] duration-150"
-                style={{ width: `${Math.round(modelLoad.frac * 100)}%` }}
-              />
-            )}
-          </div>
-        </div>
+        <MiniProgress
+          label={modelLoad.frac < 0 ? 'Preparing face engine…' : 'Downloading face model…'}
+          frac={modelLoad.frac}
+        />
       )}
 
       {detectQueue && detectQueue.total > 1 && (
-        <div className="panel p-2">
-          <div className="flex justify-between text-[10px] text-muted mb-1">
-            <span>Detecting faces…</span>
-            <span>
-              {detectQueue.done}/{detectQueue.total}
-            </span>
-          </div>
-          <div className="h-1.5 rounded-full bg-surface3 overflow-hidden">
-            <div
-              className="h-full bg-accent transition-[width] duration-150"
-              style={{ width: `${Math.round((detectQueue.done / detectQueue.total) * 100)}%` }}
-            />
-          </div>
-        </div>
+        <MiniProgress
+          label="Detecting faces…"
+          frac={detectQueue.done / detectQueue.total}
+          count={`${detectQueue.done}/${detectQueue.total}`}
+        />
       )}
 
       <div className="md:flex-1 overflow-y-auto flex flex-col gap-2 pr-1 max-h-[42vh] md:max-h-none">
         {faces.map((f) => (
-          <div key={f.id} className="panel p-2 flex gap-2 items-start">
+          <div key={f.id} className="card p-2 flex gap-2.5 items-start">
             <img
               src={f.thumb}
               alt={f.name}
-              className={`w-14 h-14 rounded-lg object-cover ${f.enabled ? '' : 'opacity-30'}`}
+              className={`w-14 h-14 rounded-xl object-cover transition-opacity ${
+                f.enabled ? '' : 'opacity-30'
+              }`}
             />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-content truncate flex-1">{f.name}</span>
+                <span className="text-xs font-medium text-content truncate flex-1">{f.name}</span>
                 {!f.detecting && !f.failed && f.landmarks && (
                   <button
                     title="Edit landmarks"
@@ -143,13 +150,13 @@ export function FaceTray({
                 ) : f.failed ? (
                   <span className="text-red-400">no face found</span>
                 ) : (
-                  <span className="text-emerald-400 inline-flex items-center gap-1">
+                  <span className="text-emerald-500 inline-flex items-center gap-1">
                     <Icon name="check" size={11} /> 478 pts
                   </span>
                 )}
               </div>
               {mode === 'average' && !f.failed && (
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-1.5">
                   <input
                     type="range"
                     min={0}
@@ -158,7 +165,9 @@ export function FaceTray({
                     value={f.weight}
                     onChange={(e) => setWeight(f.id, parseFloat(e.target.value))}
                     className="flex-1"
+                    style={{ '--fill': `${(f.weight / 3) * 100}%` } as CSSProperties}
                     disabled={!f.enabled}
+                    aria-label={`Weight of ${f.name}`}
                   />
                   <button
                     title="Use as template shape"
@@ -170,7 +179,7 @@ export function FaceTray({
                   </button>
                   <button
                     onClick={() => toggleEnabled(f.id)}
-                    className={f.enabled ? 'text-emerald-400' : 'text-faint'}
+                    className={f.enabled ? 'text-emerald-500' : 'text-faint'}
                     title="Enable/disable"
                     aria-label="Enable or disable face"
                   >
@@ -181,6 +190,11 @@ export function FaceTray({
             </div>
           </div>
         ))}
+        {faces.length > 0 && (
+          <div className="mt-1">
+            <PresetGallery compact />
+          </div>
+        )}
       </div>
     </div>
   )

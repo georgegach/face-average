@@ -23,10 +23,21 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        // SF Pro on Apple devices, best-native elsewhere. No webfont download —
+        // keeps the "nothing leaves your device" promise honest.
+        sans: [
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'SF Pro Text',
+          'Segoe UI',
+          'Roboto',
+          'Helvetica Neue',
+          'system-ui',
+          'sans-serif',
+        ],
       },
       boxShadow: {
-        glass: '0 8px 32px rgba(0,0,0,0.45)',
+        glass: '0 18px 44px rgb(var(--shadow) / 0.25)',
       },
     },
   },

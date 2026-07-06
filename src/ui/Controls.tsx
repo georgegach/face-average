@@ -126,7 +126,7 @@ function AveragePanel() {
         {adv ? '▾' : '▸'} Advanced alignment
       </button>
       {adv && (
-        <div className="flex flex-col gap-3 panel p-3">
+        <div className="flex flex-col gap-3 card p-3">
           <Slider
             label="Eye distance"
             value={settings.eyeDistance}
@@ -176,7 +176,7 @@ function MorphPanel() {
       <select
         value={value ?? ''}
         onChange={(e) => set(e.target.value)}
-        className="w-full bg-surface2 rounded-xl px-3 py-2 text-sm"
+        className="w-full px-3 py-2 text-sm"
       >
         <option value="" disabled>
           choose…
@@ -272,16 +272,14 @@ function ReplacePanel() {
               setDrag(false)
               setTargetFromFiles(e.dataTransfer.files)
             }}
-            className={`panel border-dashed cursor-pointer text-center py-6 px-3 transition-colors ${
-              drag ? 'border-accent bg-accent/5' : ''
-            }`}
+            className={`dropzone text-center py-6 px-3 ${drag ? 'border-accent bg-accent/5' : ''}`}
           >
-            <Icon name="faces" size={20} className="mx-auto text-muted mb-1" />
+            <Icon name="photo" size={20} className="mx-auto text-accent mb-1" />
             <p className="text-sm text-content">Drop the photo to swap into</p>
             <p className="text-xs text-muted mt-1">the largest face in it gets replaced</p>
           </div>
         ) : (
-          <div className="panel p-2 flex gap-2 items-start">
+          <div className="card p-2 flex gap-2 items-start">
             <img src={target.thumb} alt={target.name} className="w-14 h-14 rounded-lg object-cover" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
@@ -319,7 +317,7 @@ function ReplacePanel() {
         />
       </div>
 
-      <div className="flex flex-col gap-3 panel p-3">
+      <div className="flex flex-col gap-3 card p-3">
         <Slider
           label="Colour match"
           value={rs.colorMatch}
@@ -503,7 +501,7 @@ function EditPanel() {
       </button>
 
       {parseLoad.loading && (
-        <div className="panel p-2">
+        <div className="card p-2">
           <div className="flex justify-between text-[10px] text-muted mb-1">
             <span>Downloading face parser…</span>
             <span>{Math.round(parseLoad.frac * 100)}%</span>
@@ -522,7 +520,7 @@ function EditPanel() {
         <select
           value={face?.id ?? ''}
           onChange={(e) => setEditFace(e.target.value)}
-          className="w-full bg-surface2 rounded-xl px-3 py-2 text-sm"
+          className="w-full px-3 py-2 text-sm"
         >
           <option value="" disabled>
             choose…
@@ -538,7 +536,7 @@ function EditPanel() {
         )}
       </div>
 
-      <div className="flex flex-col gap-3 panel p-3">
+      <div className="flex flex-col gap-3 card p-3">
         <div className="label">Retouch</div>
         <Slider
           label="Skin smooth"
@@ -560,7 +558,7 @@ function EditPanel() {
         />
       </div>
 
-      <div className="flex flex-col gap-3 panel p-3">
+      <div className="flex flex-col gap-3 card p-3">
         <div className="label">Makeup</div>
         <Swatches
           label="Lips"
@@ -616,7 +614,7 @@ function EditPanel() {
         )}
       </div>
 
-      <div className="flex flex-col gap-3 panel p-3">
+      <div className="flex flex-col gap-3 card p-3">
         <div className="label">Hair</div>
         <Swatches
           label="Hair colour"
@@ -637,7 +635,7 @@ function EditPanel() {
         )}
       </div>
 
-      <div className="flex flex-col gap-3 panel p-3">
+      <div className="flex flex-col gap-3 card p-3">
         <div className="label">Shape</div>
         <Slider
           label="Smile"
@@ -686,7 +684,7 @@ function EditPanel() {
         />
       </div>
 
-      <div className="flex flex-col gap-3 panel p-3">
+      <div className="flex flex-col gap-3 card p-3">
         <div className="label">Age</div>
         {ageAvailable === false ? (
           <p className="text-xs text-muted">
@@ -773,7 +771,7 @@ function EditPanel() {
         )}
       </div>
 
-      <div className="flex flex-col gap-3 panel p-3">
+      <div className="flex flex-col gap-3 card p-3">
         <div className="label">Scene</div>
         <div>
           <div className="label mb-1">Background</div>
