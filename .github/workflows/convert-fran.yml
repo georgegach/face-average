@@ -1,0 +1,75 @@
+name: Convert FRAN to ONNX
+
+# One-time (manually dispatched) conversion of the MIT-licensed face re-aging U-Net
+# (timroelofs123/face_re-aging, a FRAN reimplementation) from PyTorch to ONNX.
+# The resulting fran.onnx is attached to the "models" release of this repo, from
+# where scripts/fetch-models.sh bundles it into the site (same-origin, SW-cached).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install --quiet "torch==2.5.1" --index-url https://download.pytorch.org/whl/cpu && pip install --quiet onnx antialiased-cnns
+
+      - name: Clone upstream model code (MIT)
+        run: git clone --depth 1 https://github.com/timroelofs123/face_reaging.git
+
+      - name: Download weights (MIT, HuggingFace)
+        run: curl -fsSL -o best_unet_model.pth "https://huggingface.co/timroelofs123/face_re-aging/resolve/main/best_unet_model.pth"
+
+      - name: Export ONNX
+        run: |
+          python - <<'EOF'
+          import sys
+          import torch
+
+          sys.path.insert(0, 'face_reaging')
+          from model.models import UNet
+
+          model = UNet()
+          state = torch.load('best_unet_model.pth', map_location='cpu')
+          # Handle either a bare state_dict or a full checkpoint dict.
+          if isinstance(state, dict) and 'state_dict' in state:
+              state = state['state_dict']
+          model.load_state_dict(state)
+          model.eval()
+
+          dummy = torch.randn(1, 5, 512, 512)
+          torch.onnx.export(
+              model,
+              dummy,
+              'fran.onnx',
+              opset_version=17,
+              input_names=['input'],
+              output_names=['delta'],
+          )
+          print('exported fran.onnx')
+
+          import onnx
+          m = onnx.load('fran.onnx')
+          onnx.checker.check_model(m)
+          print('onnx check ok')
+          EOF
+          ls -la fran.onnx
+          shasum -a 256 fran.onnx
+
+      - name: Attach to "models" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view models --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create models --repo "$GITHUB_REPOSITORY" \
+              --title "Model assets" \
+              --notes "CI-converted ONNX model assets. fran.onnx: face re-aging U-Net (FRAN reimplementation by timroelofs123, MIT), exported from https://huggingface.co/timroelofs123/face_re-aging"
+          gh release upload models fran.onnx --repo "$GITHUB_REPOSITORY" --clobber
