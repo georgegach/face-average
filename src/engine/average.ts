@@ -11,6 +11,7 @@ import {
 import { getWarpEngine } from './warp'
 import { computeStats, averageStats, applyTransfer } from './color'
 import { makeCanvas, FACE_OVAL, blurMask, boxBlur } from './mask'
+import { yieldUI, type OnProgress } from './util'
 import { N_LANDMARKS, type AverageSettings, type Face } from './types'
 
 export interface AverageResult {
@@ -49,7 +50,11 @@ function prepare(face: Face, s: AverageSettings, dstEyes: { right: Pt; left: Pt 
   return { face, aligned: canvas, points, weight: Math.max(0, face.weight) }
 }
 
-export function computeAverage(faces: Face[], s: AverageSettings): AverageResult {
+export async function computeAverage(
+  faces: Face[],
+  s: AverageSettings,
+  onProgress?: OnProgress,
+): Promise<AverageResult> {
   const usable = faces.filter((f) => f.enabled && f.landmarks && !f.failed)
   if (usable.length === 0) throw new Error('No faces with detected landmarks')
 
@@ -86,7 +91,10 @@ export function computeAverage(faces: Face[], s: AverageSettings): AverageResult
   const engine = getWarpEngine()
   const warped: Uint8ClampedArray[] = []
   const stats = []
-  for (const p of prepared) {
+  for (let k = 0; k < prepared.length; k++) {
+    const p = prepared[k]
+    onProgress?.(`Warping face ${k + 1}/${prepared.length}`, (k / prepared.length) * 0.5)
+    await yieldUI()
     const px = engine.warp(p.aligned, p.points, mesh, tris, w, h)
     warped.push(px)
     if (s.colorNormalize) stats.push(computeStats(px))
@@ -97,6 +105,8 @@ export function computeAverage(faces: Face[], s: AverageSettings): AverageResult
   const acc = new Float32Array(w * h * 3)
   const wacc = new Float32Array(w * h)
   for (let k = 0; k < prepared.length; k++) {
+    onProgress?.(`Blending face ${k + 1}/${prepared.length}`, 0.5 + (k / prepared.length) * 0.4)
+    await yieldUI()
     const px = warped[k]
     if (target && stats[k].count > 0) applyTransfer(px, stats[k], target, 0.7)
     const weight = prepared[k].weight
@@ -126,6 +136,8 @@ export function computeAverage(faces: Face[], s: AverageSettings): AverageResult
     }
   }
 
+  onProgress?.('Compositing background', 0.92)
+  await yieldUI()
   compositeBackground(out, mesh, s)
   return { imageData: out, meshUsed: mesh, count: prepared.length }
 }

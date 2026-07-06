@@ -32,13 +32,20 @@ export function downloadBlob(blob: Blob, filename: string) {
 }
 
 /** Encode frames to an animated GIF (fully client-side, no server). */
-export function exportGif(frames: ImageData[], fps: number): Blob {
+export async function exportGif(
+  frames: ImageData[],
+  fps: number,
+  onProgress?: (frac: number) => void,
+): Promise<Blob> {
   const enc = GIFEncoder()
   const delay = Math.round(1000 / fps)
-  for (const f of frames) {
+  for (let i = 0; i < frames.length; i++) {
+    const f = frames[i]
     const palette = quantize(f.data, 256)
     const index = applyPalette(f.data, palette)
     enc.writeFrame(index, f.width, f.height, { palette, delay })
+    onProgress?.((i + 1) / frames.length)
+    await new Promise((r) => setTimeout(r, 0)) // let the progress bar paint
   }
   enc.finish()
   return new Blob([enc.bytes()], { type: 'image/gif' })
@@ -51,7 +58,11 @@ function pickVideoMime(): string {
 }
 
 /** Encode frames to WebM (or MP4 on Safari) via a canvas capture stream. */
-export async function exportVideo(frames: ImageData[], fps: number): Promise<Blob> {
+export async function exportVideo(
+  frames: ImageData[],
+  fps: number,
+  onProgress?: (frac: number) => void,
+): Promise<Blob> {
   const w = frames[0].width
   const h = frames[0].height
   const canvas = document.createElement('canvas')
@@ -69,9 +80,10 @@ export async function exportVideo(frames: ImageData[], fps: number): Promise<Blo
   })
   rec.start()
   const frameMs = 1000 / fps
-  for (const f of frames) {
-    ctx.putImageData(f, 0, 0)
+  for (let i = 0; i < frames.length; i++) {
+    ctx.putImageData(frames[i], 0, 0)
     track.requestFrame()
+    onProgress?.((i + 1) / frames.length)
     await new Promise((r) => setTimeout(r, frameMs))
   }
   rec.stop()

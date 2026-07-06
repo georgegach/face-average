@@ -43,6 +43,10 @@ interface StoreState {
   parseLoad: LoadState
   ageLoad: LoadState
   ageProgress: number | null
+  // Global step-level progress for any running pipeline; frac -1 = indeterminate.
+  progress: { label: string; frac: number } | null
+  // Batch ingest/detection progress for the face tray.
+  detectQueue: { done: number; total: number } | null
 
   setMode: (m: Mode) => void
   addFiles: (files: FileList | File[]) => Promise<void>
@@ -66,6 +70,7 @@ interface StoreState {
   updateEditSettings: (patch: Partial<EditSettings>) => void
   resetEditSettings: () => void
   runEdit: () => void
+  setProgress: (p: { label: string; frac: number } | null) => void
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -86,8 +91,12 @@ export const useStore = create<StoreState>((set, get) => ({
   parseLoad: { loading: false, frac: 1 },
   ageLoad: { loading: false, frac: 1 },
   ageProgress: null,
+  progress: null,
+  detectQueue: null,
 
   setMode: (m) => set({ mode: m }),
+
+  setProgress: (p) => set({ progress: p }),
 
   addBitmap: async (bmp, name) => {
     const face: FaceView = {
@@ -126,6 +135,8 @@ export const useStore = create<StoreState>((set, get) => ({
 
   addFiles: async (files) => {
     const arr = Array.from(files).filter((f) => f.type.startsWith('image/'))
+    if (arr.length === 0) return
+    set({ detectQueue: { done: 0, total: arr.length } })
     for (const file of arr) {
       try {
         const bmp = await fileToBitmap(file)
@@ -133,10 +144,14 @@ export const useStore = create<StoreState>((set, get) => ({
       } catch {
         /* skip unreadable file */
       }
+      set((s) => (s.detectQueue ? { detectQueue: { ...s.detectQueue, done: s.detectQueue.done + 1 } } : {}))
     }
+    set({ detectQueue: null })
   },
 
   addFromUrls: async (urls, names) => {
+    if (urls.length === 0) return
+    set({ detectQueue: { done: 0, total: urls.length } })
     for (let i = 0; i < urls.length; i++) {
       try {
         const bmp = await urlToBitmap(urls[i])
@@ -145,7 +160,9 @@ export const useStore = create<StoreState>((set, get) => ({
       } catch {
         /* skip */
       }
+      set((s) => (s.detectQueue ? { detectQueue: { ...s.detectQueue, done: s.detectQueue.done + 1 } } : {}))
     }
+    set({ detectQueue: null })
   },
 
   removeFace: (id) =>
@@ -209,14 +226,16 @@ export const useStore = create<StoreState>((set, get) => ({
 
   runAverage: () => {
     const { faces, settings } = get()
-    set({ computing: true, error: null })
-    // Defer so the spinner paints before the synchronous heavy work.
-    setTimeout(() => {
+    set({ computing: true, error: null, progress: { label: 'Preparing faces', frac: 0 } })
+    // Defer so the overlay paints before the heavy work starts.
+    setTimeout(async () => {
       try {
-        const res = computeAverage(faces, settings)
-        set({ result: res.imageData, computing: false })
+        const res = await computeAverage(faces, settings, (label, frac) =>
+          set({ progress: { label, frac } }),
+        )
+        set({ result: res.imageData, computing: false, progress: null })
       } catch (e) {
-        set({ error: (e as Error).message, computing: false })
+        set({ error: (e as Error).message, computing: false, progress: null })
       }
     }, 30)
   },
@@ -279,14 +298,21 @@ export const useStore = create<StoreState>((set, get) => ({
       set({ error: 'Drop a target photo first' })
       return
     }
-    set({ computing: true, error: null })
-    // Defer so the spinner paints before the synchronous heavy work.
-    setTimeout(() => {
+    set({ computing: true, error: null, progress: { label: 'Preparing replace', frac: 0 } })
+    // Defer so the overlay paints before the heavy work starts.
+    setTimeout(async () => {
       try {
-        const res = computeReplace(faces, target, replaceSettings)
-        set({ result: res.imageData, replaceInfo: res.sourceName, computing: false })
+        const res = await computeReplace(faces, target, replaceSettings, (label, frac) =>
+          set({ progress: { label, frac } }),
+        )
+        set({
+          result: res.imageData,
+          replaceInfo: res.sourceName,
+          computing: false,
+          progress: null,
+        })
       } catch (e) {
-        set({ error: (e as Error).message, computing: false })
+        set({ error: (e as Error).message, computing: false, progress: null })
       }
     }, 30)
   },
@@ -307,8 +333,13 @@ export const useStore = create<StoreState>((set, get) => ({
       set({ error: 'Add a face with a detected face first' })
       return
     }
-    set({ computing: true, error: null, editFaceId: face.id })
-    // Defer so the spinner paints; parsing/aging may also download models on first use.
+    set({
+      computing: true,
+      error: null,
+      editFaceId: face.id,
+      progress: { label: 'Analysing face regions', frac: -1 },
+    })
+    // Defer so the overlay paints; parsing/aging may also download models on first use.
     setTimeout(async () => {
       try {
         const parsing = await getParsing(face)
@@ -316,14 +347,21 @@ export const useStore = create<StoreState>((set, get) => ({
         if (editSettings.ageEnabled) {
           set({ ageProgress: 0 })
           base = await computeAge(face, editSettings.sourceAge, editSettings.targetAge, (f) =>
-            set({ ageProgress: f }),
+            set({ ageProgress: f, progress: { label: 'Re-aging face', frac: f } }),
           )
           set({ ageProgress: null })
         }
-        const res = computeEdit(face, parsing, editSettings, base)
-        set({ result: res, computing: false })
+        const res = await computeEdit(face, parsing, editSettings, base, (label, frac) =>
+          set({ progress: { label, frac } }),
+        )
+        set({ result: res, computing: false, progress: null })
       } catch (e) {
-        set({ error: (e as Error).message, computing: false, ageProgress: null })
+        set({
+          error: (e as Error).message,
+          computing: false,
+          ageProgress: null,
+          progress: null,
+        })
       }
     }, 30)
   },

@@ -4,7 +4,8 @@
 // pixels is ever touched and texture is preserved.
 import { makeCanvas, boxBlur, insideFeather } from './mask'
 import { classMask, CLS, type Parsing } from './parsing'
-import { applyShape } from './shape'
+import { applyShape, hasShapeEdits } from './shape'
+import { yieldUI, type OnProgress } from './util'
 import { IDX, type EditSettings, type Face } from './types'
 
 const clamp255 = (v: number) => (v < 0 ? 0 : v > 255 ? 255 : v)
@@ -45,17 +46,39 @@ function getMask(
   return m
 }
 
-export function computeEdit(
+export async function computeEdit(
   face: Face,
   parsing: Parsing,
   s: EditSettings,
   base?: ImageData, // optional pre-processed frame (e.g. re-aged) to edit instead of the bitmap
-): ImageData {
+  onProgress?: OnProgress,
+): Promise<ImageData> {
   if (!face.landmarks) throw new Error('No landmarks for the selected face')
   const W = face.width
   const H = face.height
   const faceW = face.landmarks.box.width
   const feather = Math.max(2, Math.round(faceW * 0.02))
+
+  // Count active steps up-front so each op can report an even progress fraction.
+  const active: boolean[] = [
+    s.skinSmooth > 0,
+    s.teethWhiten > 0,
+    !!s.lipColor && s.lipStrength > 0,
+    s.browDefine > 0,
+    s.blush > 0,
+    !!s.eyeColor && s.eyeStrength > 0,
+    !!s.hairColor && s.hairStrength > 0,
+    s.background !== 'none' && s.backgroundStrength > 0,
+    s.vignette > 0,
+    hasShapeEdits(s),
+  ]
+  const totalSteps = Math.max(1, active.filter(Boolean).length)
+  let step = 0
+  const report = async (label: string) => {
+    onProgress?.(label, step / totalSteps)
+    step++
+    await yieldUI()
+  }
 
   let out: ImageData
   if (base) {
@@ -71,6 +94,7 @@ export function computeEdit(
 
   // ---- Retouch: skin smoothing (frequency separation, detail partially preserved) ----
   if (s.skinSmooth > 0) {
+    await report('Smoothing skin')
     const m = getMask(face.id, parsing, W, H, [CLS.skin, CLS.nose, CLS.neck], feather)
     const r = Math.max(2, Math.round(faceW * 0.025))
     const low = boxBlur(d, W, H, r)
@@ -87,6 +111,7 @@ export function computeEdit(
 
   // ---- Retouch: teeth whitening (inner-mouth mask, gated to bright pixels) ----
   if (s.teethWhiten > 0) {
+    await report('Whitening teeth')
     const m = getMask(face.id, parsing, W, H, [CLS.mouth], Math.max(1, feather >> 1))
     for (let j = 0; j < m.length; j++) {
       if (m[j] <= 0) continue
@@ -106,6 +131,7 @@ export function computeEdit(
 
   // ---- Makeup: lip tint (luminance-preserving colorize) ----
   if (s.lipColor && s.lipStrength > 0) {
+    await report('Tinting lips')
     const [tr, tg, tb] = hexToRgb(s.lipColor)
     const tLum = Math.max(1, lum(tr, tg, tb))
     const m = getMask(face.id, parsing, W, H, [CLS.uLip, CLS.lLip], Math.max(1, feather >> 1))
@@ -122,6 +148,7 @@ export function computeEdit(
 
   // ---- Makeup: brow definition (darken + slight contrast in the brow mask) ----
   if (s.browDefine > 0) {
+    await report('Defining brows')
     const m = getMask(face.id, parsing, W, H, [CLS.lBrow, CLS.rBrow], Math.max(1, feather >> 1))
     for (let j = 0; j < m.length; j++) {
       if (m[j] <= 0) continue
@@ -135,6 +162,7 @@ export function computeEdit(
 
   // ---- Makeup: blush (gaussian falloff around the cheek landmarks) ----
   if (s.blush > 0) {
+    await report('Applying blush')
     const rose: [number, number, number] = [226, 106, 122]
     const radius = faceW * 0.16
     const sigma2 = 2 * (radius * 0.7) * (radius * 0.7)
@@ -165,6 +193,7 @@ export function computeEdit(
 
   // ---- Makeup: eye colour (iris circles from the refined iris landmarks) ----
   if (s.eyeColor && s.eyeStrength > 0) {
+    await report('Recolouring eyes')
     const [tr, tg, tb] = hexToRgb(s.eyeColor)
     const tLum = Math.max(1, lum(tr, tg, tb))
     for (const [center, ring] of [
@@ -208,6 +237,7 @@ export function computeEdit(
 
   // ---- Hair colour (texture-preserving recolor with lift for light targets) ----
   if (s.hairColor && s.hairStrength > 0) {
+    await report('Recolouring hair')
     const [tr, tg, tb] = hexToRgb(s.hairColor)
     const tLum = Math.max(1, lum(tr, tg, tb))
     const m = getMask(face.id, parsing, W, H, [CLS.hair], feather)
@@ -227,6 +257,7 @@ export function computeEdit(
 
   // ---- Scene: background bokeh / studio ----
   if (s.background !== 'none' && s.backgroundStrength > 0) {
+    await report(s.background === 'bokeh' ? 'Blurring background' : 'Studio background')
     // Foreground = every non-background class; inside-feather it so the blend ramp sits
     // inside the person and no background halo bleeds onto the subject.
     const fgClasses: number[] = []
@@ -271,6 +302,7 @@ export function computeEdit(
 
   // ---- Scene: vignette ----
   if (s.vignette > 0) {
+    await report('Adding vignette')
     const cx = W / 2
     const cy = H / 2
     const maxD = Math.hypot(cx, cy)
@@ -289,5 +321,6 @@ export function computeEdit(
 
   // ---- Shape warps last: pixel edits above use masks aligned to the original bitmap;
   // the warp then moves the (already-edited) pixels in one geometric pass. ----
+  if (hasShapeEdits(s)) await report('Applying shape warp')
   return applyShape(out, face, s)
 }

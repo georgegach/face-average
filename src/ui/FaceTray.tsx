@@ -19,6 +19,7 @@ export function FaceTray({
   const setTemplate = useStore((s) => s.setTemplate)
   const clearFaces = useStore((s) => s.clearFaces)
   const modelLoad = useStore((s) => s.modelLoad)
+  const detectQueue = useStore((s) => s.detectQueue)
   const inputRef = useRef<HTMLInputElement>(null)
   const [drag, setDrag] = useState(false)
 
@@ -85,6 +86,23 @@ export function FaceTray({
                 style={{ width: `${Math.round(modelLoad.frac * 100)}%` }}
               />
             )}
+          </div>
+        </div>
+      )}
+
+      {detectQueue && detectQueue.total > 1 && (
+        <div className="panel p-2">
+          <div className="flex justify-between text-[10px] text-muted mb-1">
+            <span>Detecting faces…</span>
+            <span>
+              {detectQueue.done}/{detectQueue.total}
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full bg-surface3 overflow-hidden">
+            <div
+              className="h-full bg-accent transition-[width] duration-150"
+              style={{ width: `${Math.round((detectQueue.done / detectQueue.total) * 100)}%` }}
+            />
           </div>
         </div>
       )}

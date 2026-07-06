@@ -8,6 +8,7 @@ import { getWarpEngine } from './warp'
 import { rasterizeOval, insideFeather, makeCanvas } from './mask'
 import { estimatePose, poseDistance } from './pose'
 import { computeStats, applyTransfer } from './color'
+import { yieldUI, type OnProgress } from './util'
 import { N_LANDMARKS, type Face, type ReplaceSettings } from './types'
 
 export interface ReplaceResult {
@@ -15,11 +16,12 @@ export interface ReplaceResult {
   sourceName: string
 }
 
-export function computeReplace(
+export async function computeReplace(
   sources: Face[],
   target: Face,
   s: ReplaceSettings,
-): ReplaceResult {
+  onProgress?: OnProgress,
+): Promise<ReplaceResult> {
   // ---- validate ----
   const usable = sources.filter((f) => f.enabled && f.landmarks && !f.failed)
   if (usable.length === 0) throw new Error('Add at least one source face with a detected face')
@@ -31,6 +33,8 @@ export function computeReplace(
   const dstPts = tl.points // 478*2, target pixel space
 
   // ---- pose bank: rank sources by pose match, tie-break by source-face resolution ----
+  onProgress?.('Choosing the closest pose', 0.05)
+  await yieldUI()
   const tPose = estimatePose(tl)
   const ranked = usable
     .map((f) => ({
@@ -57,13 +61,19 @@ export function computeReplace(
   // Raw bitmap + its own dims as srcW/srcH; mipmap for clean minification. No pre-alignment:
   // the mesh->mesh warp is the whole transform (aligning first would double-transform).
   const engine = getWarpEngine()
-  const layers = chosen.map(({ f }) =>
-    engine.warp(f.bitmap, f.landmarks!.points, dstPts, tris, W, H, {
-      srcW: f.width,
-      srcH: f.height,
-      mipmap: true,
-    }),
-  )
+  const layers: Uint8ClampedArray[] = []
+  for (let k = 0; k < chosen.length; k++) {
+    onProgress?.(`Warping source ${k + 1}/${chosen.length}`, 0.15 + (k / chosen.length) * 0.3)
+    await yieldUI()
+    const { f } = chosen[k]
+    layers.push(
+      engine.warp(f.bitmap, f.landmarks!.points, dstPts, tris, W, H, {
+        srcW: f.width,
+        srcH: f.height,
+        mipmap: true,
+      }),
+    )
+  }
   const warped = layers[0]
   if (layers.length > 1) {
     for (let i = 0; i < warped.length; i += 4) {
@@ -90,6 +100,8 @@ export function computeReplace(
   }
 
   // ---- original target pixels (they are the composite background) ----
+  onProgress?.('Building the face mask', 0.55)
+  await yieldUI()
   const tc = makeCanvas(W, H)
   const tctx = tc.getContext('2d') as CanvasRenderingContext2D
   tctx.drawImage(target.bitmap as CanvasImageSource, 0, 0)
@@ -104,6 +116,8 @@ export function computeReplace(
   const m = insideFeather(binary, W, H, featherPx)
 
   // ---- colour match: move the warped face toward the target's face-region stats ----
+  onProgress?.('Matching colour', 0.75)
+  await yieldUI()
   if (s.colorMatch > 0) {
     // computeStats ignores alpha<8, so masking via alpha yields face-region-only stats.
     const tFace = new Uint8ClampedArray(tgt.data) // copy — do not mutate tgt
@@ -116,6 +130,8 @@ export function computeReplace(
   }
 
   // ---- composite: out = target*(1-m) + warped*m; fully opaque output ----
+  onProgress?.('Compositing', 0.9)
+  await yieldUI()
   const out = new ImageData(W, H)
   const od = out.data,
     td = tgt.data
