@@ -86,6 +86,12 @@ export interface EditSettings {
   background: 'none' | 'bokeh' | 'studio'
   backgroundStrength: number // 0..1
   vignette: number // 0..1
+  // Shape (landmark-displacement warps)
+  smile: number // -1..1
+  eyeSize: number // -1..1
+  noseSlim: number // 0..1
+  faceSlim: number // 0..1
+  hairVolume: number // 0..1
 }
 
 export const DEFAULT_EDIT_SETTINGS: EditSettings = {
@@ -102,4 +108,9 @@ export const DEFAULT_EDIT_SETTINGS: EditSettings = {
   background: 'none',
   backgroundStrength: 0.6,
   vignette: 0,
+  smile: 0,
+  eyeSize: 0,
+  noseSlim: 0,
+  faceSlim: 0,
+  hairVolume: 0,
 }

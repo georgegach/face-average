@@ -4,6 +4,7 @@
 // pixels is ever touched and texture is preserved.
 import { makeCanvas, boxBlur, insideFeather } from './mask'
 import { classMask, CLS, type Parsing } from './parsing'
+import { applyShape } from './shape'
 import { IDX, type EditSettings, type Face } from './types'
 
 const clamp255 = (v: number) => (v < 0 ? 0 : v > 255 ? 255 : v)
@@ -276,5 +277,7 @@ export function computeEdit(face: Face, parsing: Parsing, s: EditSettings): Imag
     }
   }
 
-  return out
+  // ---- Shape warps last: pixel edits above use masks aligned to the original bitmap;
+  // the warp then moves the (already-edited) pixels in one geometric pass. ----
+  return applyShape(out, face, s)
 }

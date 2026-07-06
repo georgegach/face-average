@@ -624,6 +624,55 @@ function EditPanel() {
       </div>
 
       <div className="flex flex-col gap-3 panel p-3">
+        <div className="label">Shape</div>
+        <Slider
+          label="Smile"
+          value={es.smile}
+          min={-1}
+          max={1}
+          step={0.05}
+          onChange={(v) => update({ smile: v })}
+          format={(v) => `${v > 0 ? '+' : ''}${Math.round(v * 100)}%`}
+        />
+        <Slider
+          label="Eye size"
+          value={es.eyeSize}
+          min={-1}
+          max={1}
+          step={0.05}
+          onChange={(v) => update({ eyeSize: v })}
+          format={(v) => `${v > 0 ? '+' : ''}${Math.round(v * 100)}%`}
+        />
+        <Slider
+          label="Nose slim"
+          value={es.noseSlim}
+          min={0}
+          max={1}
+          step={0.05}
+          onChange={(v) => update({ noseSlim: v })}
+          format={(v) => `${Math.round(v * 100)}%`}
+        />
+        <Slider
+          label="Face slim"
+          value={es.faceSlim}
+          min={0}
+          max={1}
+          step={0.05}
+          onChange={(v) => update({ faceSlim: v })}
+          format={(v) => `${Math.round(v * 100)}%`}
+        />
+        <Slider
+          label="Hair volume"
+          value={es.hairVolume}
+          min={0}
+          max={1}
+          step={0.05}
+          onChange={(v) => update({ hairVolume: v })}
+          format={(v) => `${Math.round(v * 100)}%`}
+        />
+      </div>
+
+      <div className="flex flex-col gap-3 panel p-3">
         <div className="label">Scene</div>
         <div>
           <div className="label mb-1">Background</div>
