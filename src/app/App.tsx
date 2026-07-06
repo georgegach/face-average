@@ -12,6 +12,7 @@ import { getTheme, setTheme, type Theme } from '../ui/theme'
 const MODES: [Mode, string][] = [
   ['average', 'Average'],
   ['morph', 'Morph'],
+  ['replace', 'Replace'],
   ['enhance', 'Enhance'],
 ]
 

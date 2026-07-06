@@ -1,10 +1,17 @@
 import { create } from 'zustand'
-import { DEFAULT_SETTINGS, type AverageSettings, type Face } from '../engine/types'
+import {
+  DEFAULT_SETTINGS,
+  DEFAULT_REPLACE_SETTINGS,
+  type AverageSettings,
+  type ReplaceSettings,
+  type Face,
+} from '../engine/types'
 import { detectLandmarks, onLandmarkerProgress, type LoadState } from '../engine/landmarks'
 import { fileToBitmap, urlToBitmap, bitmapToDataURL } from '../engine/image'
 import { computeAverage } from '../engine/average'
+import { computeReplace } from '../engine/replace'
 
-export type Mode = 'average' | 'morph' | 'enhance'
+export type Mode = 'average' | 'morph' | 'enhance' | 'replace'
 
 let idc = 0
 const newId = () => `f${++idc}`
@@ -23,6 +30,9 @@ interface StoreState {
   morphA: string | null
   morphB: string | null
   modelLoad: LoadState
+  target: FaceView | null
+  replaceSettings: ReplaceSettings
+  replaceInfo: string | null
 
   setMode: (m: Mode) => void
   addFiles: (files: FileList | File[]) => Promise<void>
@@ -38,6 +48,10 @@ interface StoreState {
   runAverage: () => void
   setResult: (img: ImageData | null) => void
   setMorphPair: (a: string | null, b: string | null) => void
+  setTargetFromFiles: (files: FileList | File[]) => Promise<void>
+  clearTarget: () => void
+  updateReplaceSettings: (patch: Partial<ReplaceSettings>) => void
+  runReplace: () => void
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -50,6 +64,9 @@ export const useStore = create<StoreState>((set, get) => ({
   morphA: null,
   morphB: null,
   modelLoad: { loading: false, frac: 1 },
+  target: null,
+  replaceSettings: { ...DEFAULT_REPLACE_SETTINGS },
+  replaceInfo: null,
 
   setMode: (m) => set({ mode: m }),
 
@@ -179,6 +196,76 @@ export const useStore = create<StoreState>((set, get) => ({
       try {
         const res = computeAverage(faces, settings)
         set({ result: res.imageData, computing: false })
+      } catch (e) {
+        set({ error: (e as Error).message, computing: false })
+      }
+    }, 30)
+  },
+
+  setTargetFromFiles: async (files) => {
+    const file = Array.from(files).find((f) => f.type.startsWith('image/'))
+    if (!file) return
+    let bmp: ImageBitmap
+    try {
+      bmp = await fileToBitmap(file)
+    } catch {
+      return // unreadable file
+    }
+    get().target?.bitmap.close() // free the previous target
+    // Unique id (not a constant) so a stale detection callback from an old target can't
+    // overwrite a newer one — see the guard below.
+    const t: FaceView = {
+      id: newId(),
+      name: file.name.replace(/\.[^.]+$/, ''),
+      bitmap: bmp,
+      width: bmp.width,
+      height: bmp.height,
+      landmarks: null,
+      detecting: true,
+      failed: false,
+      weight: 1,
+      enabled: true,
+      editRev: 0,
+      thumb: bitmapToDataURL(bmp),
+    }
+    set({ target: t })
+    try {
+      const lm = await detectLandmarks(bmp)
+      set((s) => {
+        const cur = s.target
+        if (!cur || cur.id !== t.id) return {} // a newer target replaced this one mid-detect
+        return { target: { ...cur, landmarks: lm, detecting: false, failed: !lm } }
+      })
+    } catch {
+      set((s) => {
+        const cur = s.target
+        if (!cur || cur.id !== t.id) return {}
+        return { target: { ...cur, detecting: false, failed: true } }
+      })
+    }
+  },
+
+  clearTarget: () =>
+    set((s) => {
+      s.target?.bitmap.close()
+      return { target: null }
+    }),
+
+  updateReplaceSettings: (patch) =>
+    set((s) => ({ replaceSettings: { ...s.replaceSettings, ...patch } })),
+
+  runReplace: () => {
+    const { faces, target, replaceSettings } = get()
+    if (!target) {
+      set({ error: 'Drop a target photo first' })
+      return
+    }
+    set({ computing: true, error: null })
+    // Defer so the spinner paints before the synchronous heavy work.
+    setTimeout(() => {
+      try {
+        const res = computeReplace(faces, target, replaceSettings)
+        set({ result: res.imageData, replaceInfo: res.sourceName, computing: false })
       } catch (e) {
         set({ error: (e as Error).message, computing: false })
       }

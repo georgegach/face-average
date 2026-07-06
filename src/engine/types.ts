@@ -53,3 +53,17 @@ export const DEFAULT_SETTINGS: AverageSettings = {
   background: 'blur',
   templateId: null,
 }
+
+export interface ReplaceSettings {
+  feather: number // blend-ramp width as a fraction of the target face bbox width
+  grow: number // face-oval expansion from its centroid
+  colorMatch: number // Reinhard transfer strength 0..1
+  blendTopK: 1 | 2 // number of nearest-pose sources blended (1 = max fidelity)
+}
+
+export const DEFAULT_REPLACE_SETTINGS: ReplaceSettings = {
+  feather: 0.05,
+  grow: 1.05,
+  colorMatch: 0.7,
+  blendTopK: 1,
+}

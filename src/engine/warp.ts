@@ -86,10 +86,16 @@ export class WarpEngine {
     tris: Uint32Array,
     w: number,
     h: number,
+    opts?: { srcW?: number; srcH?: number; mipmap?: boolean },
   ): Uint8ClampedArray {
     const gl = this.gl
     this.resize(w, h)
     gl.useProgram(this.prog)
+    // Source UVs are normalized by the source texture's own dimensions. Callers that
+    // pre-render the source into the w×h output canvas (average/morph) omit srcW/srcH and
+    // get the default w/h; the replace path passes the raw bitmap's native dimensions.
+    const srcW = opts?.srcW ?? w
+    const srcH = opts?.srcH ?? h
 
     // Build interleaved vertex buffer [posX,posY,u,v] per triangle vertex.
     const nVerts = tris.length
@@ -102,8 +108,8 @@ export class WarpEngine {
       const sy = srcPts[idx * 2 + 1]
       data[i * 4] = (dx / w) * 2 - 1
       data[i * 4 + 1] = 1 - (dy / h) * 2
-      data[i * 4 + 2] = sx / w
-      data[i * 4 + 3] = 1 - sy / h // flipY compensation
+      data[i * 4 + 2] = sx / srcW
+      data[i * 4 + 3] = 1 - sy / srcH // flipY compensation
     }
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo)
@@ -115,11 +121,19 @@ export class WarpEngine {
 
     gl.activeTexture(gl.TEXTURE0)
     gl.bindTexture(gl.TEXTURE_2D, this.tex)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    // The texture object is reused across calls, so MIN_FILTER must be set explicitly every
+    // time (mipmapped last call would otherwise linger). Mipmaps give clean trilinear
+    // minification when the source face is larger in pixels than the target face region.
+    gl.texParameteri(
+      gl.TEXTURE_2D,
+      gl.TEXTURE_MIN_FILTER,
+      opts?.mipmap ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR,
+    )
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source as TexImageSource)
+    if (opts?.mipmap) gl.generateMipmap(gl.TEXTURE_2D) // must follow texImage2D
     gl.uniform1i(gl.getUniformLocation(this.prog, 'uTex'), 0)
 
     gl.clearColor(0, 0, 0, 0)

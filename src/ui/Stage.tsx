@@ -17,6 +17,7 @@ function ResultStage() {
   const computing = useStore((s) => s.computing)
   const error = useStore((s) => s.error)
   const faces = useStore((s) => s.faces)
+  const mode = useStore((s) => s.mode)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -35,7 +36,9 @@ function ResultStage() {
     <div className="flex-1 grid place-items-center p-6 relative">
       {computing && (
         <div className="absolute inset-0 grid place-items-center bg-bg/70 z-10">
-          <div className="text-accent-hi animate-pulse text-sm">Averaging…</div>
+          <div className="text-accent-hi animate-pulse text-sm">
+            {mode === 'replace' ? 'Replacing…' : 'Averaging…'}
+          </div>
         </div>
       )}
       {error && (
@@ -49,6 +52,11 @@ function ResultStage() {
           data-testid="result-canvas"
           className="max-w-full max-h-full rounded-2xl shadow-glass object-contain"
         />
+      ) : mode === 'replace' ? (
+        <div className="text-muted text-sm text-center max-w-xs">
+          Drop a target photo in the right panel — the face in it gets replaced with your
+          sources.
+        </div>
       ) : (
         <div className="text-muted text-sm text-center">
           {faces.length} face{faces.length > 1 ? 's' : ''} loaded — press{' '}

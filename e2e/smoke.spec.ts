@@ -67,3 +67,29 @@ test('morph mode renders and responds to the blend slider', async ({ page }) => 
   const after = await canvasVariance(page, 'morph-canvas')
   expect(Math.abs(after - before)).toBeGreaterThan(0.0001)
 })
+
+test('replace mode warps a source face onto a target photo', async ({ page }) => {
+  page.on('console', (m) => console.log(`[browser:${m.type()}] ${m.text()}`))
+  page.on('pageerror', (e) => console.log(`[pageerror] ${e.message}`))
+  await page.goto('/')
+
+  // Sources: load the presidents preset into the tray.
+  await page.getByRole('button', { name: /US Presidents/ }).click()
+  await expect(page.getByText('478 pts').nth(1)).toBeVisible({ timeout: 90_000 })
+
+  await page.getByRole('button', { name: 'Replace', exact: true }).click()
+
+  // Target: upload a committed preset image straight into the hidden target input.
+  await page.setInputFiles(
+    '[data-testid="replace-target-input"]',
+    'public/presets/presidents/bill-clinton.jpg',
+  )
+  await expect(page.getByText('Face detected')).toBeVisible({ timeout: 60_000 })
+
+  await page.getByRole('button', { name: 'Replace face' }).click()
+  await expect(page.getByTestId('result-canvas')).toBeVisible({ timeout: 60_000 })
+
+  await expect
+    .poll(() => canvasVariance(page, 'result-canvas'), { timeout: 30_000 })
+    .toBeGreaterThan(50)
+})

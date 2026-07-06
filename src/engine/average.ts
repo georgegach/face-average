@@ -10,6 +10,7 @@ import {
 } from './geometry'
 import { getWarpEngine } from './warp'
 import { computeStats, averageStats, applyTransfer } from './color'
+import { makeCanvas, FACE_OVAL, blurMask, boxBlur } from './mask'
 import { N_LANDMARKS, type AverageSettings, type Face } from './types'
 
 export interface AverageResult {
@@ -23,14 +24,6 @@ interface Prepared {
   aligned: OffscreenCanvas | HTMLCanvasElement
   points: Float32Array // N_TOTAL*2 in output space
   weight: number
-}
-
-function makeCanvas(w: number, h: number): OffscreenCanvas | HTMLCanvasElement {
-  if (typeof OffscreenCanvas !== 'undefined') return new OffscreenCanvas(w, h)
-  const c = document.createElement('canvas')
-  c.width = w
-  c.height = h
-  return c
 }
 
 function prepare(face: Face, s: AverageSettings, dstEyes: { right: Pt; left: Pt }): Prepared | null {
@@ -137,12 +130,6 @@ export function computeAverage(faces: Face[], s: AverageSettings): AverageResult
   return { imageData: out, meshUsed: mesh, count: prepared.length }
 }
 
-// FaceMesh outer silhouette loop (FACEMESH_FACE_OVAL), ordered.
-const FACE_OVAL = [
-  10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152,
-  148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109,
-]
-
 /**
  * The warp covers the whole canvas, so the three background modes only mean
  * something once we know where the *face* is. Build a soft mask from the
@@ -213,89 +200,4 @@ function compositeBackground(img: ImageData, mesh: Float32Array, s: AverageSetti
       data[j * 4 + 3] = Math.round(soft[j] * 255)
     }
   }
-}
-
-function blurMask(src: Float32Array, w: number, h: number, r: number): Float32Array {
-  if (r < 1) return src
-  const tmp = new Float32Array(w * h)
-  const inv = 1 / (2 * r + 1)
-  for (let y = 0; y < h; y++) {
-    let acc = 0
-    for (let x = -r; x <= r; x++) acc += src[y * w + Math.min(w - 1, Math.max(0, x))]
-    for (let x = 0; x < w; x++) {
-      tmp[y * w + x] = acc * inv
-      const add = src[y * w + Math.min(w - 1, x + r + 1)]
-      const sub = src[y * w + Math.max(0, x - r)]
-      acc += add - sub
-    }
-  }
-  const out = new Float32Array(w * h)
-  for (let x = 0; x < w; x++) {
-    let acc = 0
-    for (let y = -r; y <= r; y++) acc += tmp[Math.min(h - 1, Math.max(0, y)) * w + x]
-    for (let y = 0; y < h; y++) {
-      out[y * w + x] = acc * inv
-      const add = tmp[Math.min(h - 1, y + r + 1) * w + x]
-      const sub = tmp[Math.max(0, y - r) * w + x]
-      acc += add - sub
-    }
-  }
-  return out
-}
-
-function boxBlur(src: Uint8ClampedArray, w: number, h: number, r: number): Uint8ClampedArray {
-  // Cheap separable box blur that ignores transparent source pixels.
-  const tmp = new Float32Array(w * h * 3)
-  const tw = new Float32Array(w * h)
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const idx = y * w + x
-      let r0 = 0,
-        g0 = 0,
-        b0 = 0,
-        wsum = 0
-      for (let dx = -r; dx <= r; dx += 4) {
-        const xx = x + dx
-        if (xx < 0 || xx >= w) continue
-        const si = (y * w + xx) * 4
-        if (src[si + 3] === 0) continue
-        r0 += src[si]
-        g0 += src[si + 1]
-        b0 += src[si + 2]
-        wsum++
-      }
-      tmp[idx * 3] = r0
-      tmp[idx * 3 + 1] = g0
-      tmp[idx * 3 + 2] = b0
-      tw[idx] = wsum
-    }
-  }
-  const out = new Uint8ClampedArray(w * h * 4)
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const idx = y * w + x
-      let r0 = 0,
-        g0 = 0,
-        b0 = 0,
-        wsum = 0
-      for (let dy = -r; dy <= r; dy += 4) {
-        const yy = y + dy
-        if (yy < 0 || yy >= h) continue
-        const si = yy * w + x
-        if (tw[si] === 0) continue
-        r0 += tmp[si * 3]
-        g0 += tmp[si * 3 + 1]
-        b0 += tmp[si * 3 + 2]
-        wsum += tw[si]
-      }
-      const o = idx * 4
-      if (wsum > 0) {
-        out[o] = r0 / wsum
-        out[o + 1] = g0 / wsum
-        out[o + 2] = b0 / wsum
-        out[o + 3] = 255
-      }
-    }
-  }
-  return out
 }
