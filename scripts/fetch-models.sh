@@ -61,6 +61,13 @@ fetch \
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task" \
   "$OUT/face_landmarker.task" "-" "required" || exit 1
 
+# ---- Face parsing (BiSeNet ResNet18, MIT — yakhyo/face-parsing) (REQUIRED) --
+# 19-class CelebAMask-HQ segmentation at 512x512; powers the Edit mode's
+# retouch/makeup/hair/background tools.
+fetch \
+  "https://github.com/yakhyo/face-parsing/releases/download/weights/resnet18.onnx" \
+  "$OUT/face_parsing.onnx" "0d9bd318e46987c3bdbfacae9e2c0f461cae1c6ac6ea6d43bbe541a91727e33f" "required" || exit 1
+
 # Note: ONNX upscalers are NOT bundled — they exceed GitHub Pages' deploy size
 # and instead load at runtime from HuggingFace (see src/engine/models.ts),
 # cached by the service worker.

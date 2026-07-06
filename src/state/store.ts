@@ -2,16 +2,20 @@ import { create } from 'zustand'
 import {
   DEFAULT_SETTINGS,
   DEFAULT_REPLACE_SETTINGS,
+  DEFAULT_EDIT_SETTINGS,
   type AverageSettings,
   type ReplaceSettings,
+  type EditSettings,
   type Face,
 } from '../engine/types'
 import { detectLandmarks, onLandmarkerProgress, type LoadState } from '../engine/landmarks'
 import { fileToBitmap, urlToBitmap, bitmapToDataURL } from '../engine/image'
 import { computeAverage } from '../engine/average'
 import { computeReplace } from '../engine/replace'
+import { computeEdit } from '../engine/edit'
+import { getParsing, onParsingProgress } from '../engine/parsing'
 
-export type Mode = 'average' | 'morph' | 'enhance' | 'replace'
+export type Mode = 'average' | 'morph' | 'enhance' | 'replace' | 'edit'
 
 let idc = 0
 const newId = () => `f${++idc}`
@@ -33,6 +37,9 @@ interface StoreState {
   target: FaceView | null
   replaceSettings: ReplaceSettings
   replaceInfo: string | null
+  editFaceId: string | null
+  editSettings: EditSettings
+  parseLoad: LoadState
 
   setMode: (m: Mode) => void
   addFiles: (files: FileList | File[]) => Promise<void>
@@ -52,6 +59,10 @@ interface StoreState {
   clearTarget: () => void
   updateReplaceSettings: (patch: Partial<ReplaceSettings>) => void
   runReplace: () => void
+  setEditFace: (id: string | null) => void
+  updateEditSettings: (patch: Partial<EditSettings>) => void
+  resetEditSettings: () => void
+  runEdit: () => void
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -67,6 +78,9 @@ export const useStore = create<StoreState>((set, get) => ({
   target: null,
   replaceSettings: { ...DEFAULT_REPLACE_SETTINGS },
   replaceInfo: null,
+  editFaceId: null,
+  editSettings: { ...DEFAULT_EDIT_SETTINGS },
+  parseLoad: { loading: false, frac: 1 },
 
   setMode: (m) => set({ mode: m }),
 
@@ -271,7 +285,39 @@ export const useStore = create<StoreState>((set, get) => ({
       }
     }, 30)
   },
+
+  setEditFace: (id) => set({ editFaceId: id }),
+
+  updateEditSettings: (patch) =>
+    set((s) => ({ editSettings: { ...s.editSettings, ...patch } })),
+
+  resetEditSettings: () => set({ editSettings: { ...DEFAULT_EDIT_SETTINGS } }),
+
+  runEdit: () => {
+    const { faces, editFaceId, editSettings } = get()
+    const face =
+      faces.find((f) => f.id === editFaceId && f.landmarks && !f.failed) ??
+      faces.find((f) => f.landmarks && !f.failed)
+    if (!face) {
+      set({ error: 'Add a face with a detected face first' })
+      return
+    }
+    set({ computing: true, error: null, editFaceId: face.id })
+    // Defer so the spinner paints; parsing may also download its model on first use.
+    setTimeout(async () => {
+      try {
+        const parsing = await getParsing(face)
+        const res = computeEdit(face, parsing, editSettings)
+        set({ result: res, computing: false })
+      } catch (e) {
+        set({ error: (e as Error).message, computing: false })
+      }
+    }, 30)
+  },
 }))
 
 // Mirror one-time landmarker model-download progress into the store.
 onLandmarkerProgress((s) => useStore.setState({ modelLoad: s }))
+
+// Mirror one-time face-parsing model-download progress into the store.
+onParsingProgress((s) => useStore.setState({ parseLoad: s }))

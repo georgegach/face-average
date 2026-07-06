@@ -13,6 +13,7 @@ const MODES: [Mode, string][] = [
   ['average', 'Average'],
   ['morph', 'Morph'],
   ['replace', 'Replace'],
+  ['edit', 'Edit'],
   ['enhance', 'Enhance'],
 ]
 

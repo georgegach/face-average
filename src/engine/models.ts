@@ -11,6 +11,7 @@ export const MODELS = {
   landmarkerTask: `${B}models/face_landmarker.task`,
   mediapipeWasm: `${B}models/wasm`,
   ortWasm: `${B}models/ort/`,
+  faceParsing: `${B}models/face_parsing.onnx`,
   upscalers: {
     photo: `${HF}/4x-UltraSharpV2_Lite.onnx`,
     anime: `${HF}/4x-AnimeSharp.onnx`,

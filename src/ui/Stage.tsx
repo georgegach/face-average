@@ -37,7 +37,7 @@ function ResultStage() {
       {computing && (
         <div className="absolute inset-0 grid place-items-center bg-bg/70 z-10">
           <div className="text-accent-hi animate-pulse text-sm">
-            {mode === 'replace' ? 'Replacing…' : 'Averaging…'}
+            {mode === 'replace' ? 'Replacing…' : mode === 'edit' ? 'Applying edits…' : 'Averaging…'}
           </div>
         </div>
       )}
@@ -56,6 +56,11 @@ function ResultStage() {
         <div className="text-muted text-sm text-center max-w-xs">
           Drop a target photo in the right panel — the face in it gets replaced with your
           sources.
+        </div>
+      ) : mode === 'edit' ? (
+        <div className="text-muted text-sm text-center max-w-xs">
+          Pick a face and adjust the tools on the right, then press{' '}
+          <span className="text-accent-hi">Apply edits</span>.
         </div>
       ) : (
         <div className="text-muted text-sm text-center">

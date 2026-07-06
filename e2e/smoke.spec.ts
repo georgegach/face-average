@@ -93,3 +93,25 @@ test('replace mode warps a source face onto a target photo', async ({ page }) =>
     .poll(() => canvasVariance(page, 'result-canvas'), { timeout: 30_000 })
     .toBeGreaterThan(50)
 })
+
+test('edit mode parses a face and applies mask-based edits', async ({ page }) => {
+  page.on('console', (m) => console.log(`[browser:${m.type()}] ${m.text()}`))
+  page.on('pageerror', (e) => console.log(`[pageerror] ${e.message}`))
+  await page.goto('/')
+
+  await page.getByRole('button', { name: /US Presidents/ }).click()
+  await expect(page.getByText('478 pts').nth(1)).toBeVisible({ timeout: 90_000 })
+
+  await page.getByRole('button', { name: 'Edit', exact: true }).click()
+
+  // Pick a visible edit (hair colour) so the output provably differs from the input.
+  await page.getByRole('button', { name: 'Hair colour Auburn' }).click()
+
+  // First run downloads the (same-origin) parsing model and runs BiSeNet on wasm.
+  await page.getByRole('button', { name: 'Apply edits' }).click()
+  await expect(page.getByTestId('result-canvas')).toBeVisible({ timeout: 120_000 })
+
+  await expect
+    .poll(() => canvasVariance(page, 'result-canvas'), { timeout: 60_000 })
+    .toBeGreaterThan(50)
+})

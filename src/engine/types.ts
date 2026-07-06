@@ -67,3 +67,39 @@ export const DEFAULT_REPLACE_SETTINGS: ReplaceSettings = {
   colorMatch: 0.7,
   blendTopK: 1,
 }
+
+export interface EditSettings {
+  // Retouch
+  skinSmooth: number // 0..1
+  teethWhiten: number // 0..1
+  // Makeup
+  lipColor: string | null // hex, null = off
+  lipStrength: number // 0..1
+  blush: number // 0..1
+  browDefine: number // 0..1
+  eyeColor: string | null // hex, null = off
+  eyeStrength: number // 0..1
+  // Hair
+  hairColor: string | null // hex, null = off
+  hairStrength: number // 0..1
+  // Scene
+  background: 'none' | 'bokeh' | 'studio'
+  backgroundStrength: number // 0..1
+  vignette: number // 0..1
+}
+
+export const DEFAULT_EDIT_SETTINGS: EditSettings = {
+  skinSmooth: 0,
+  teethWhiten: 0,
+  lipColor: null,
+  lipStrength: 0.6,
+  blush: 0,
+  browDefine: 0,
+  eyeColor: null,
+  eyeStrength: 0.6,
+  hairColor: null,
+  hairStrength: 0.7,
+  background: 'none',
+  backgroundStrength: 0.6,
+  vignette: 0,
+}
