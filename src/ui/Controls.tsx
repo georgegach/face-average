@@ -441,6 +441,12 @@ const EYE_COLORS: [string, string][] = [
   ['Grey', '#7d838c'],
 ]
 
+const AGE_PRESETS: [string, number][] = [
+  ['Child', 8],
+  ['Young', 25],
+  ['Old', 70],
+]
+
 const HAIR_COLORS: [string, string][] = [
   ['Black', '#191a1e'],
   ['Dark brown', '#3b2a20'],
@@ -697,6 +703,19 @@ function EditPanel() {
                 onChange={(e) => update({ ageEnabled: e.target.checked })}
               />
             </label>
+            <div className="flex gap-2">
+              {AGE_PRESETS.map(([name, age]) => (
+                <button
+                  key={name}
+                  onClick={() => update({ ageEnabled: true, targetAge: age })}
+                  className={`btn text-xs flex-1 ${
+                    es.ageEnabled && es.targetAge === age ? 'btn-accent' : 'btn-ghost'
+                  }`}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
             {es.ageEnabled && (
               <>
                 <Slider
