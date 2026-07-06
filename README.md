@@ -10,6 +10,8 @@ FaceStudio is a ground-up rewrite of the original `face-average` Python/dlib CLI
 
 - **Average** any number of faces into one, with per-face weight sliders, template-shape mode, Lab-style colour normalisation, and background options.
 - **Morph** between two people with a live blend slider; export the animation as **WebM/MP4** or **GIF**.
+- **Replace** a face in any photo from a multi-image *pose bank* of one person — the closest-pose source is warped onto the target at native resolution, colour-matched and seam-feathered. No generative models, no quality loss.
+- **Edit** faces FaceApp-style, all on-device: skin smoothing, teeth whitening, makeup (lips / blush / brows / eye colour), hair recolouring, background bokeh or studio, and vignette via **BiSeNet face parsing**; shape tools (smile, eye size, nose/face slim, hair volume) as landmark warps; and **re-aging** with a CI-converted **FRAN** U-Net (MIT) that edits as an identity-preserving delta.
 - **Enhance** results with on-device **Real-ESRGAN** upscalers (photo / anime / general) via ONNX Runtime Web (WebGPU when available).
 - **Webcam capture**, batch drag-and-drop, and a preset gallery to try instantly.
 - Installable **PWA**, offline-capable after first load.
