@@ -45,17 +45,27 @@ function getMask(
   return m
 }
 
-export function computeEdit(face: Face, parsing: Parsing, s: EditSettings): ImageData {
+export function computeEdit(
+  face: Face,
+  parsing: Parsing,
+  s: EditSettings,
+  base?: ImageData, // optional pre-processed frame (e.g. re-aged) to edit instead of the bitmap
+): ImageData {
   if (!face.landmarks) throw new Error('No landmarks for the selected face')
   const W = face.width
   const H = face.height
   const faceW = face.landmarks.box.width
   const feather = Math.max(2, Math.round(faceW * 0.02))
 
-  const canvas = makeCanvas(W, H)
-  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
-  ctx.drawImage(face.bitmap as CanvasImageSource, 0, 0)
-  const out = ctx.getImageData(0, 0, W, H)
+  let out: ImageData
+  if (base) {
+    out = new ImageData(new Uint8ClampedArray(base.data), W, H)
+  } else {
+    const canvas = makeCanvas(W, H)
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    ctx.drawImage(face.bitmap as CanvasImageSource, 0, 0)
+    out = ctx.getImageData(0, 0, W, H)
+  }
   const d = out.data
   const pts = face.landmarks.points
 

@@ -92,6 +92,10 @@ export interface EditSettings {
   noseSlim: number // 0..1
   faceSlim: number // 0..1
   hairVolume: number // 0..1
+  // Age (FRAN re-aging; requires the optional CI-converted model)
+  ageEnabled: boolean
+  sourceAge: number // the person's actual age in the photo
+  targetAge: number // desired apparent age
 }
 
 export const DEFAULT_EDIT_SETTINGS: EditSettings = {
@@ -113,4 +117,7 @@ export const DEFAULT_EDIT_SETTINGS: EditSettings = {
   noseSlim: 0,
   faceSlim: 0,
   hairVolume: 0,
+  ageEnabled: false,
+  sourceAge: 30,
+  targetAge: 60,
 }

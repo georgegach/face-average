@@ -14,6 +14,7 @@ import { computeAverage } from '../engine/average'
 import { computeReplace } from '../engine/replace'
 import { computeEdit } from '../engine/edit'
 import { getParsing, onParsingProgress } from '../engine/parsing'
+import { computeAge, onAgingProgress } from '../engine/aging'
 
 export type Mode = 'average' | 'morph' | 'enhance' | 'replace' | 'edit'
 
@@ -40,6 +41,8 @@ interface StoreState {
   editFaceId: string | null
   editSettings: EditSettings
   parseLoad: LoadState
+  ageLoad: LoadState
+  ageProgress: number | null
 
   setMode: (m: Mode) => void
   addFiles: (files: FileList | File[]) => Promise<void>
@@ -81,6 +84,8 @@ export const useStore = create<StoreState>((set, get) => ({
   editFaceId: null,
   editSettings: { ...DEFAULT_EDIT_SETTINGS },
   parseLoad: { loading: false, frac: 1 },
+  ageLoad: { loading: false, frac: 1 },
+  ageProgress: null,
 
   setMode: (m) => set({ mode: m }),
 
@@ -303,14 +308,22 @@ export const useStore = create<StoreState>((set, get) => ({
       return
     }
     set({ computing: true, error: null, editFaceId: face.id })
-    // Defer so the spinner paints; parsing may also download its model on first use.
+    // Defer so the spinner paints; parsing/aging may also download models on first use.
     setTimeout(async () => {
       try {
         const parsing = await getParsing(face)
-        const res = computeEdit(face, parsing, editSettings)
+        let base: ImageData | undefined
+        if (editSettings.ageEnabled) {
+          set({ ageProgress: 0 })
+          base = await computeAge(face, editSettings.sourceAge, editSettings.targetAge, (f) =>
+            set({ ageProgress: f }),
+          )
+          set({ ageProgress: null })
+        }
+        const res = computeEdit(face, parsing, editSettings, base)
         set({ result: res, computing: false })
       } catch (e) {
-        set({ error: (e as Error).message, computing: false })
+        set({ error: (e as Error).message, computing: false, ageProgress: null })
       }
     }, 30)
   },
@@ -321,3 +334,6 @@ onLandmarkerProgress((s) => useStore.setState({ modelLoad: s }))
 
 // Mirror one-time face-parsing model-download progress into the store.
 onParsingProgress((s) => useStore.setState({ parseLoad: s }))
+
+// Mirror one-time re-aging model-download progress into the store.
+onAgingProgress((s) => useStore.setState({ ageLoad: s }))

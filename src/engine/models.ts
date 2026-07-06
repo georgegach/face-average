@@ -12,6 +12,7 @@ export const MODELS = {
   mediapipeWasm: `${B}models/wasm`,
   ortWasm: `${B}models/ort/`,
   faceParsing: `${B}models/face_parsing.onnx`,
+  fran: `${B}models/fran.onnx`,
   upscalers: {
     photo: `${HF}/4x-UltraSharpV2_Lite.onnx`,
     anime: `${HF}/4x-AnimeSharp.onnx`,

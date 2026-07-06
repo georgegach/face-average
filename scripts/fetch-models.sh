@@ -68,6 +68,13 @@ fetch \
   "https://github.com/yakhyo/face-parsing/releases/download/weights/resnet18.onnx" \
   "$OUT/face_parsing.onnx" "0d9bd318e46987c3bdbfacae9e2c0f461cae1c6ac6ea6d43bbe541a91727e33f" "required" || exit 1
 
+# ---- Face re-aging (FRAN U-Net, MIT — CI-converted, see convert-fran.yml) --
+# Optional: the asset exists only after the one-time conversion workflow has run;
+# builds stay green without it and the Age tool reports itself unavailable.
+fetch \
+  "https://github.com/georgegach/face-average/releases/download/models/fran.onnx" \
+  "$OUT/fran.onnx" "-" "optional"
+
 # Note: ONNX upscalers are NOT bundled — they exceed GitHub Pages' deploy size
 # and instead load at runtime from HuggingFace (see src/engine/models.ts),
 # cached by the service worker.

@@ -4,6 +4,7 @@ import { Slider } from './Slider'
 import { Icon } from './Icon'
 import { exportPng, downloadBlob } from '../engine/export'
 import { upscale, type UpscaleStage } from '../engine/upscale'
+import { isAgingAvailable } from '../engine/aging'
 import type { UpscalerKind } from '../engine/models'
 
 export function Controls() {
@@ -464,6 +465,13 @@ function EditPanel() {
   const computing = useStore((s) => s.computing)
   const result = useStore((s) => s.result)
   const parseLoad = useStore((s) => s.parseLoad)
+  const ageLoad = useStore((s) => s.ageLoad)
+  const ageProgress = useStore((s) => s.ageProgress)
+  const [ageAvailable, setAgeAvailable] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    isAgingAvailable().then(setAgeAvailable)
+  }, [])
 
   const usable = faces.filter((f) => f.landmarks && !f.failed)
   const face = usable.find((f) => f.id === editFaceId) ?? usable[0]
@@ -670,6 +678,80 @@ function EditPanel() {
           onChange={(v) => update({ hairVolume: v })}
           format={(v) => `${Math.round(v * 100)}%`}
         />
+      </div>
+
+      <div className="flex flex-col gap-3 panel p-3">
+        <div className="label">Age</div>
+        {ageAvailable === false ? (
+          <p className="text-xs text-muted">
+            The re-aging model isn't published yet — run the convert-fran workflow once to
+            enable this tool.
+          </p>
+        ) : (
+          <>
+            <label className="flex items-center justify-between text-sm">
+              <span className="text-content">Re-age face</span>
+              <input
+                type="checkbox"
+                checked={es.ageEnabled}
+                onChange={(e) => update({ ageEnabled: e.target.checked })}
+              />
+            </label>
+            {es.ageEnabled && (
+              <>
+                <Slider
+                  label="Current age"
+                  value={es.sourceAge}
+                  min={10}
+                  max={90}
+                  step={1}
+                  onChange={(v) => update({ sourceAge: v })}
+                  format={(v) => `${Math.round(v)}`}
+                />
+                <Slider
+                  label="Target age"
+                  value={es.targetAge}
+                  min={5}
+                  max={85}
+                  step={1}
+                  onChange={(v) => update({ targetAge: v })}
+                  format={(v) => `${Math.round(v)}`}
+                />
+                <p className="text-[11px] text-faint">
+                  One-time ~124 MB download. Fast with WebGPU; slower on CPU-only browsers.
+                </p>
+              </>
+            )}
+            {ageLoad.loading && (
+              <div>
+                <div className="flex justify-between text-[10px] text-muted mb-1">
+                  <span>Downloading re-aging model…</span>
+                  <span>{Math.round(ageLoad.frac * 100)}%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-surface3 overflow-hidden">
+                  <div
+                    className="h-full bg-accent transition-[width] duration-150"
+                    style={{ width: `${Math.round(ageLoad.frac * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            {ageProgress !== null && (
+              <div>
+                <div className="flex justify-between text-[10px] text-muted mb-1">
+                  <span>Re-aging…</span>
+                  <span>{Math.round(ageProgress * 100)}%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-surface3 overflow-hidden">
+                  <div
+                    className="h-full bg-accent transition-[width] duration-150"
+                    style={{ width: `${Math.round(ageProgress * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       <div className="flex flex-col gap-3 panel p-3">

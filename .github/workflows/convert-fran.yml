@@ -20,7 +20,12 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install --quiet "torch==2.5.1" --index-url https://download.pytorch.org/whl/cpu && pip install --quiet onnx antialiased-cnns
+        run: |
+          # Prefer the small CPU-only wheel; its CDN is occasionally flaky, so fall
+          # back to the (larger) default PyPI wheel if the handshake fails.
+          pip install --quiet "torch==2.5.1" --index-url https://download.pytorch.org/whl/cpu \
+            || pip install --quiet "torch==2.5.1"
+          pip install --quiet onnx antialiased-cnns
 
       - name: Clone upstream model code (MIT)
         run: git clone --depth 1 https://github.com/timroelofs123/face_reaging.git
