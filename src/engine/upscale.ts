@@ -40,16 +40,6 @@ async function getSession(
   return s
 }
 
-export async function isUpscalerAvailable(kind: UpscalerKind): Promise<boolean> {
-  // Ranged GET (1 byte) — HEAD isn't reliable through HuggingFace's redirect.
-  try {
-    const res = await fetch(MODELS.upscalers[kind], { headers: { Range: 'bytes=0-0' } })
-    return res.ok || res.status === 206
-  } catch {
-    return false
-  }
-}
-
 function tileToTensor(data: Uint8ClampedArray, w: number, h: number): ort.Tensor {
   const arr = new Float32Array(3 * w * h)
   const plane = w * h

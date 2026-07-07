@@ -47,11 +47,6 @@ async function getLandmarker(): Promise<FaceLandmarker> {
   return landmarkerPromise
 }
 
-/** Kick off the model download early (e.g. on first user intent). */
-export function preloadLandmarker() {
-  void getLandmarker()
-}
-
 export async function detectLandmarks(bitmap: ImageBitmap): Promise<Landmarks | null> {
   const lm = await getLandmarker()
   const w = bitmap.width

@@ -8,7 +8,7 @@ import { LandmarkEditor } from '../ui/LandmarkEditor'
 import { Icon, type IconName } from '../ui/Icon'
 import { getTheme, setTheme, type Theme } from '../ui/theme'
 
-export const MODE_META: Record<Mode, { label: string; icon: IconName; blurb: string }> = {
+const MODE_META: Record<Mode, { label: string; icon: IconName; blurb: string }> = {
   edit: {
     label: 'Edit',
     icon: 'wand',

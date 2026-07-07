@@ -4,7 +4,7 @@
 
 import { IDX, type Landmarks } from './types'
 
-export interface Pose {
+interface Pose {
   yaw: number
   pitch: number
   roll: number

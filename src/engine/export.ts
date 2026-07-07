@@ -1,6 +1,6 @@
 import { GIFEncoder, quantize, applyPalette } from 'gifenc'
 
-export function imageDataToCanvas(img: ImageData): HTMLCanvasElement {
+function imageDataToCanvas(img: ImageData): HTMLCanvasElement {
   const c = document.createElement('canvas')
   c.width = img.width
   c.height = img.height

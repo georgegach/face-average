@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Face averaging & morphing, fully client-side in your browser.",
+  "description": "Private on-device face editor — retouch, restyle, reshape and re-age portraits entirely in your browser.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

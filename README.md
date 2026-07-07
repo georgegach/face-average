@@ -26,8 +26,6 @@ The flagship is a full **face editor**; averaging, morphing, replace, enhance, a
 - Models are **self-hosted** (fetched at build time, SHA-checked) and cached by a service worker.
 - Deployed to **GitHub Pages** by CI, which also runs a Playwright smoke test that exercises the real WASM pipeline.
 
-See [`PLAN.md`](./PLAN.md) for the full design.
-
 ## Development
 
 ```bash

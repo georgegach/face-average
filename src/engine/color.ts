@@ -1,7 +1,7 @@
 // Simplified Reinhard color transfer: match each face's per-channel mean/std to
 // a group target so inputs shot under different lighting don't muddy the average.
 
-export interface ChannelStats {
+interface ChannelStats {
   mean: [number, number, number]
   std: [number, number, number]
   count: number

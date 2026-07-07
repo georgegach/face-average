@@ -14,7 +14,7 @@ import { makeCanvas, FACE_OVAL, blurMask, boxBlur } from './mask'
 import { yieldUI, type OnProgress } from './util'
 import { N_LANDMARKS, type AverageSettings, type Face } from './types'
 
-export interface AverageResult {
+interface AverageResult {
   imageData: ImageData
   meshUsed: Float32Array // destination mesh (N_TOTAL*2) for the editor/overlay
   count: number

@@ -1,6 +1,6 @@
 import { N_LANDMARKS, IDX, type Landmarks } from './types'
 
-export interface Affine {
+interface Affine {
   // maps (x,y) -> (a*x + b*y + tx, c*x + d*y + ty)
   a: number
   b: number
@@ -26,10 +26,6 @@ export function similarityFrom2(src0: Pt, src1: Pt, dst0: Pt, dst1: Pt): Affine 
   const tx = dst0[0] - (a * src0[0] - b * src0[1])
   const ty = dst0[1] - (b * src0[0] + a * src0[1])
   return { a, b: -b, c: b, d: a, tx, ty }
-}
-
-export function applyAffine(m: Affine, p: Pt): Pt {
-  return [m.a * p[0] + m.b * p[1] + m.tx, m.c * p[0] + m.d * p[1] + m.ty]
 }
 
 export function irisCenters(l: Landmarks): { right: Pt; left: Pt } {
@@ -79,5 +75,5 @@ export function boundaryPoints(w: number, h: number): Float32Array {
   return new Float32Array(b)
 }
 
-export const N_BOUNDARY = 8
+const N_BOUNDARY = 8
 export const N_TOTAL = N_LANDMARKS + N_BOUNDARY

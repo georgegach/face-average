@@ -11,7 +11,7 @@ import { IDX, type EditSettings, type Face } from './types'
 const clamp255 = (v: number) => (v < 0 ? 0 : v > 255 ? 255 : v)
 const lum = (r: number, g: number, b: number) => 0.299 * r + 0.587 * g + 0.114 * b
 
-export function hexToRgb(hex: string): [number, number, number] {
+function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '')
   return [
     parseInt(h.slice(0, 2), 16),

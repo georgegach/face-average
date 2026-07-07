@@ -7,7 +7,7 @@ import { fetchWithProgressCached } from './download'
 import { makeCanvas, blurMask } from './mask'
 import type { Face } from './types'
 
-export const PARSE_SIZE = 512
+const PARSE_SIZE = 512
 
 // CelebAMask-HQ label indices (face-parsing.PyTorch convention).
 export const CLS = {

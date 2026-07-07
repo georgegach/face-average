@@ -11,7 +11,7 @@ import { computeStats, applyTransfer } from './color'
 import { yieldUI, type OnProgress } from './util'
 import { N_LANDMARKS, type Face, type ReplaceSettings } from './types'
 
-export interface ReplaceResult {
+interface ReplaceResult {
   imageData: ImageData
   sourceName: string
 }

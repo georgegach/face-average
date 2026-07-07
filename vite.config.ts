@@ -13,7 +13,8 @@ export default defineConfig({
       manifest: {
         name: 'FaceStudio',
         short_name: 'FaceStudio',
-        description: 'Face averaging & morphing in your browser',
+        description:
+          'Private on-device face editor — retouch, restyle, reshape and re-age portraits entirely in your browser.',
         theme_color: '#0a0a0e',
         background_color: '#0a0a0e',
         display: 'standalone',
