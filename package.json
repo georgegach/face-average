@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Private on-device face editor — retouch, restyle, reshape and re-age portraits entirely in your browser.",
+  "license": "GPL-3.0-only",
+  "author": "George Gach",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
