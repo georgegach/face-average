@@ -9,6 +9,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 4173",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "test:e2e": "playwright test"
   },
   "dependencies": {
@@ -31,6 +32,7 @@
     "tailwindcss": "3.4.17",
     "typescript": "5.7.2",
     "vite": "6.0.5",
-    "vite-plugin-pwa": "0.21.1"
+    "vite-plugin-pwa": "0.21.1",
+    "vitest": "3.2.4"
   }
 }
