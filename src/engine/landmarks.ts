@@ -1,6 +1,7 @@
 import { FilesetResolver, FaceLandmarker } from '@mediapipe/tasks-vision'
 import { MODELS } from './models'
 import { fetchWithProgress } from './download'
+import { progressChannel } from './util'
 import type { Landmarks } from './types'
 
 // MediaPipe's WASM loader relies on importScripts, which is unavailable in ES
@@ -10,24 +11,17 @@ let landmarkerPromise: Promise<FaceLandmarker> | null = null
 
 // Load-progress broadcast so the UI can show the one-time model download.
 // frac < 0 means indeterminate (runtime/wasm phase); 0..1 is the model download.
-export type LoadState = { loading: boolean; frac: number }
-const listeners = new Set<(s: LoadState) => void>()
-export function onLandmarkerProgress(cb: (s: LoadState) => void): () => void {
-  listeners.add(cb)
-  return () => listeners.delete(cb)
-}
-function emit(s: LoadState) {
-  for (const cb of listeners) cb(s)
-}
+const channel = progressChannel()
+export const onLandmarkerProgress = channel.on
 
 async function getLandmarker(): Promise<FaceLandmarker> {
   if (!landmarkerPromise) {
     landmarkerPromise = (async () => {
       try {
-        emit({ loading: true, frac: -1 }) // preparing runtime (wasm)
+        channel.emit({ loading: true, frac: -1 }) // preparing runtime (wasm)
         const fileset = await FilesetResolver.forVisionTasks(MODELS.mediapipeWasm)
         const buf = await fetchWithProgress(MODELS.landmarkerTask, (f) =>
-          emit({ loading: true, frac: f }),
+          channel.emit({ loading: true, frac: f }),
         )
         const lm = await FaceLandmarker.createFromOptions(fileset, {
           baseOptions: { modelAssetBuffer: new Uint8Array(buf), delegate: 'CPU' },
@@ -36,10 +30,10 @@ async function getLandmarker(): Promise<FaceLandmarker> {
           outputFaceBlendshapes: false,
           outputFacialTransformationMatrixes: false,
         })
-        emit({ loading: false, frac: 1 })
+        channel.emit({ loading: false, frac: 1 })
         return lm
       } catch (e) {
-        emit({ loading: false, frac: 1 })
+        channel.emit({ loading: false, frac: 1 })
         throw e
       }
     })()

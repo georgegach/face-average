@@ -3,7 +3,8 @@
 // resampled to native resolution, so the pixel edits themselves stay full-quality.
 import * as ort from 'onnxruntime-web'
 import { MODELS } from './models'
-import { fetchWithProgressCached } from './download'
+import { createOrtSession } from './ort'
+import { progressChannel } from './util'
 import { makeCanvas, blurMask } from './mask'
 import type { Face } from './types'
 
@@ -40,43 +41,23 @@ export interface Parsing {
 }
 
 // Load-progress broadcast for the one-time model download (mirrors landmarks.ts).
-export type ParseLoadState = { loading: boolean; frac: number }
-const listeners = new Set<(s: ParseLoadState) => void>()
-export function onParsingProgress(cb: (s: ParseLoadState) => void): () => void {
-  listeners.add(cb)
-  return () => listeners.delete(cb)
-}
-function emit(s: ParseLoadState) {
-  for (const cb of listeners) cb(s)
-}
-
-ort.env.wasm.wasmPaths = MODELS.ortWasm
+const channel = progressChannel()
+export const onParsingProgress = channel.on
 
 let sessionPromise: Promise<ort.InferenceSession> | null = null
 
-function providers(): string[] {
-  const p: string[] = []
-  if ('gpu' in navigator) p.push('webgpu')
-  p.push('wasm')
-  return p
-}
-
 function getSession(): Promise<ort.InferenceSession> {
   if (!sessionPromise) {
-    ort.env.wasm.numThreads = 1 // GitHub Pages has no cross-origin isolation
     sessionPromise = (async () => {
       try {
-        emit({ loading: true, frac: 0 })
-        const bytes = await fetchWithProgressCached(MODELS.faceParsing, (f) =>
-          emit({ loading: true, frac: f }),
+        channel.emit({ loading: true, frac: 0 })
+        const s = await createOrtSession(MODELS.faceParsing, (f) =>
+          channel.emit({ loading: true, frac: f }),
         )
-        const s = await ort.InferenceSession.create(bytes, {
-          executionProviders: providers(),
-        })
-        emit({ loading: false, frac: 1 })
+        channel.emit({ loading: false, frac: 1 })
         return s
       } catch (e) {
-        emit({ loading: false, frac: 1 })
+        channel.emit({ loading: false, frac: 1 })
         sessionPromise = null // allow retry after a transient failure
         throw e
       }

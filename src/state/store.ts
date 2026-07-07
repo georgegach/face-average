@@ -10,7 +10,8 @@ import {
   type BabySettings,
   type Face,
 } from '../engine/types'
-import { detectLandmarks, onLandmarkerProgress, type LoadState } from '../engine/landmarks'
+import { detectLandmarks, onLandmarkerProgress } from '../engine/landmarks'
+import type { LoadState } from '../engine/util'
 import { fileToBitmap, urlToBitmap, bitmapToDataURL } from '../engine/image'
 import { computeAverage } from '../engine/average'
 import { computeReplace } from '../engine/replace'

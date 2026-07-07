@@ -4,35 +4,21 @@
 // feature stays disabled rather than breaking the app.
 import * as ort from 'onnxruntime-web'
 import { MODELS, type UpscalerKind } from './models'
-import { fetchWithProgressCached } from './download'
+import { createOrtSession } from './ort'
 
 const SCALE = 4
 const TILE = 192
 const OVERLAP = 16
 
-// Load ORT's own wasm/mjs assets same-origin (self-hosted), not from a CDN.
-ort.env.wasm.wasmPaths = MODELS.ortWasm
-
 const sessions = new Map<UpscalerKind, Promise<ort.InferenceSession>>()
 
-function providers(): string[] {
-  const p: string[] = []
-  if ('gpu' in navigator) p.push('webgpu')
-  p.push('wasm')
-  return p
-}
-
-async function getSession(
+function getSession(
   kind: UpscalerKind,
   onDownload?: (frac: number) => void,
 ): Promise<ort.InferenceSession> {
   let s = sessions.get(kind)
   if (!s) {
-    ort.env.wasm.numThreads = 1 // GitHub Pages has no cross-origin isolation
-    s = (async () => {
-      const bytes = await fetchWithProgressCached(MODELS.upscalers[kind], onDownload)
-      return ort.InferenceSession.create(bytes, { executionProviders: providers() })
-    })()
+    s = createOrtSession(MODELS.upscalers[kind], onDownload)
     sessions.set(kind, s)
   } else {
     onDownload?.(1) // already downloaded/cached

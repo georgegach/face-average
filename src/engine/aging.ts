@@ -5,7 +5,8 @@
 // Weights: MIT-licensed reimplementation (timroelofs123/face_re-aging), CI-converted to ONNX.
 import * as ort from 'onnxruntime-web'
 import { MODELS } from './models'
-import { fetchWithProgressCached } from './download'
+import { createOrtSession } from './ort'
+import { progressChannel } from './util'
 import { makeCanvas, rasterizeOval, insideFeather } from './mask'
 import type { Face } from './types'
 
@@ -13,43 +14,23 @@ const CROP = 1024
 const WIN = 512
 const STRIDE = 256
 
-export type AgeLoadState = { loading: boolean; frac: number }
-const listeners = new Set<(s: AgeLoadState) => void>()
-export function onAgingProgress(cb: (s: AgeLoadState) => void): () => void {
-  listeners.add(cb)
-  return () => listeners.delete(cb)
-}
-function emit(s: AgeLoadState) {
-  for (const cb of listeners) cb(s)
-}
-
-ort.env.wasm.wasmPaths = MODELS.ortWasm
+const channel = progressChannel()
+export const onAgingProgress = channel.on
 
 let sessionPromise: Promise<ort.InferenceSession> | null = null
 
-function providers(): string[] {
-  const p: string[] = []
-  if ('gpu' in navigator) p.push('webgpu')
-  p.push('wasm')
-  return p
-}
-
 function getSession(): Promise<ort.InferenceSession> {
   if (!sessionPromise) {
-    ort.env.wasm.numThreads = 1
     sessionPromise = (async () => {
       try {
-        emit({ loading: true, frac: 0 })
-        const bytes = await fetchWithProgressCached(MODELS.fran, (f) =>
-          emit({ loading: true, frac: f }),
+        channel.emit({ loading: true, frac: 0 })
+        const s = await createOrtSession(MODELS.fran, (f) =>
+          channel.emit({ loading: true, frac: f }),
         )
-        const s = await ort.InferenceSession.create(bytes, {
-          executionProviders: providers(),
-        })
-        emit({ loading: false, frac: 1 })
+        channel.emit({ loading: false, frac: 1 })
         return s
       } catch (e) {
-        emit({ loading: false, frac: 1 })
+        channel.emit({ loading: false, frac: 1 })
         sessionPromise = null
         throw e
       }
