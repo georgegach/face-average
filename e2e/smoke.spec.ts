@@ -130,8 +130,8 @@ test('future baby blends two parents into a preview', async ({ page }) => {
   await page.getByRole('button', { name: /US Presidents/ }).click()
   await expect(page.getByText('478 pts').nth(1)).toBeVisible({ timeout: 90_000 })
 
-  await page.getByRole('button', { name: /More tools/ }).click()
-  await page.getByRole('button', { name: /Future Baby/ }).click()
+  // Enter the Future Baby gimmick via the featured link in the (default) editor.
+  await page.getByRole('button', { name: /Try Future Baby/ }).click()
 
   // Keep it fast and deterministic whether or not the FRAN model is published:
   // turn off neural de-aging so it's a pure on-device blend of the two parents.
