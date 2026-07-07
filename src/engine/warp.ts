@@ -74,6 +74,11 @@ export class WarpEngine {
   }
 
   /**
+   * NOTE: pass a Canvas, not a raw ImageBitmap. This engine relies on UNPACK_FLIP_Y_WEBGL
+   * (set in the constructor) to cancel the shader's V-flip, but that pixel-store flag is
+   * ignored for ImageBitmap uploads — a bitmap source comes out vertically mirrored. Draw
+   * the bitmap into a canvas first (see replace.ts / average.ts).
+   *
    * @param source  aligned source image (already similarity-transformed to w×h)
    * @param srcPts  source points in output pixels (interleaved), N points
    * @param dstPts  destination points in output pixels (interleaved), N points

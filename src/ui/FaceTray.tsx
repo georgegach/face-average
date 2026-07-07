@@ -37,6 +37,8 @@ export function FaceTray({
   const babyA = useStore((s) => s.babyA)
   const babyB = useStore((s) => s.babyB)
   const setBabyParents = useStore((s) => s.setBabyParents)
+  const editFaceId = useStore((s) => s.editFaceId)
+  const setEditFace = useStore((s) => s.setEditFace)
   const addFiles = useStore((s) => s.addFiles)
   const removeFace = useStore((s) => s.removeFace)
   const setWeight = useStore((s) => s.setWeight)
@@ -47,6 +49,14 @@ export function FaceTray({
   const detectQueue = useStore((s) => s.detectQueue)
   const inputRef = useRef<HTMLInputElement>(null)
   const [drag, setDrag] = useState(false)
+
+  // In the flagship editor, clicking a face in the tray picks the one being edited. Mirror
+  // EditPanel's fallback (first detected face) so the highlight matches even before an
+  // explicit pick or after the selected face is removed.
+  const selectable = mode === 'edit'
+  const selectedId = selectable
+    ? (editFaceId ?? faces.find((f) => f.landmarks && !f.failed)?.id ?? null)
+    : null
 
   return (
     <div className="flex flex-col gap-3 h-full">
@@ -116,8 +126,18 @@ export function FaceTray({
       )}
 
       <div className="md:flex-1 overflow-y-auto flex flex-col gap-2 pr-1 max-h-[42vh] md:max-h-none">
-        {faces.map((f) => (
-          <div key={f.id} className="card p-2 flex gap-2.5 items-start">
+        {faces.map((f) => {
+          const canSelect = selectable && !!f.landmarks && !f.failed
+          const selected = canSelect && selectedId === f.id
+          return (
+          <div
+            key={f.id}
+            onClick={canSelect ? () => setEditFace(f.id) : undefined}
+            aria-current={selected ? 'true' : undefined}
+            className={`card p-2 flex gap-2.5 items-start ${
+              canSelect ? 'cursor-pointer' : ''
+            } ${selected ? '!border-accent ring-1 ring-accent/60' : ''}`}
+          >
             <img
               src={f.thumb}
               alt={f.name}
@@ -133,7 +153,10 @@ export function FaceTray({
                     title="Edit landmarks"
                     aria-label="Edit landmarks"
                     className={`hover:text-content ${f.editRev > 0 ? 'text-accent-hi' : 'text-muted'}`}
-                    onClick={() => onEdit(f.id)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onEdit(f.id)
+                    }}
                   >
                     <Icon name="edit" size={13} />
                   </button>
@@ -142,7 +165,10 @@ export function FaceTray({
                   title="Remove"
                   aria-label="Remove face"
                   className="text-muted hover:text-red-400"
-                  onClick={() => removeFace(f.id)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    removeFace(f.id)
+                  }}
                 >
                   <Icon name="close" size={13} />
                 </button>
@@ -155,6 +181,11 @@ export function FaceTray({
                 ) : (
                   <span className="text-emerald-500 inline-flex items-center gap-1">
                     <Icon name="check" size={11} /> 478 pts
+                  </span>
+                )}
+                {selected && (
+                  <span className="ml-1.5 text-accent-hi inline-flex items-center gap-0.5">
+                    <Icon name="wand" size={10} /> Editing
                   </span>
                 )}
               </div>
@@ -219,7 +250,8 @@ export function FaceTray({
               )}
             </div>
           </div>
-        ))}
+          )
+        })}
         {faces.length > 0 && (
           <div className="mt-1">
             <PresetGallery compact />

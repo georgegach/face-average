@@ -58,16 +58,23 @@ export async function computeReplace(
   const tris = new Uint32Array(new Delaunator(coords).triangles)
 
   // ---- warp each chosen source onto the target mesh, at native target resolution ----
-  // Raw bitmap + its own dims as srcW/srcH; mipmap for clean minification. No pre-alignment:
-  // the mesh->mesh warp is the whole transform (aligning first would double-transform).
+  // The source is rendered into a native-size canvas first (not fed as a raw ImageBitmap):
+  // WebGL's UNPACK_FLIP_Y_WEBGL — which the warp shader's V-flip relies on — is ignored for
+  // ImageBitmap sources, so passing the bitmap directly would land the face upside down. A
+  // canvas restores the same orientation handling the average/morph paths use. srcW/srcH keep
+  // sampling at native resolution; mipmap gives clean minification. No pre-alignment: the
+  // mesh->mesh warp is the whole transform (aligning first would double-transform).
   const engine = getWarpEngine()
   const layers: Uint8ClampedArray[] = []
   for (let k = 0; k < chosen.length; k++) {
     onProgress?.(`Warping source ${k + 1}/${chosen.length}`, 0.15 + (k / chosen.length) * 0.3)
     await yieldUI()
     const { f } = chosen[k]
+    const sc = makeCanvas(f.width, f.height)
+    const sctx = sc.getContext('2d') as CanvasRenderingContext2D
+    sctx.drawImage(f.bitmap as CanvasImageSource, 0, 0)
     layers.push(
-      engine.warp(f.bitmap, f.landmarks!.points, dstPts, tris, W, H, {
+      engine.warp(sc, f.landmarks!.points, dstPts, tris, W, H, {
         srcW: f.width,
         srcH: f.height,
         mipmap: true,
