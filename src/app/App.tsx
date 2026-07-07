@@ -174,7 +174,7 @@ export default function App() {
       </main>
 
       <footer className="px-4 py-3 text-center text-[11px] text-faint">
-        100% local · your photos never leave your device · WASM + WebGL in your browser
+        100% local · your photos never leave your device · anonymous usage analytics only
       </footer>
 
       {webcam && <WebcamModal onClose={() => setWebcam(false)} />}

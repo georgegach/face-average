@@ -18,6 +18,7 @@ import { computeReplace } from '../engine/replace'
 import { computeEdit } from '../engine/edit'
 import { getParsing, onParsingProgress } from '../engine/parsing'
 import { computeAge, isAgingAvailable, onAgingProgress } from '../engine/aging'
+import { capture, tracked } from '../lib/analytics'
 
 // The face editor is the flagship; the rest are auxiliary tools + the "baby" gimmick.
 export type Mode = 'edit' | 'baby' | 'average' | 'morph' | 'enhance' | 'replace'
@@ -107,7 +108,10 @@ export const useStore = create<StoreState>((set, get) => ({
   progress: null,
   detectQueue: null,
 
-  setMode: (m) => set({ mode: m }),
+  setMode: (m) => {
+    capture('mode_switched', { mode: m })
+    set({ mode: m })
+  },
 
   setProgress: (p) => set({ progress: p }),
 
@@ -284,44 +288,47 @@ export const useStore = create<StoreState>((set, get) => ({
           colorNormalize: true,
           templateId: null,
         }
-        const avg = await computeAverage(
-          [
-            { ...A, weight: wA, enabled: true },
-            { ...B, weight: wB, enabled: true },
-          ],
-          avgSettings,
-          (label, frac) => set({ progress: { label, frac: 0.1 + frac * 0.4 } }),
-        )
+        const out = await tracked('baby', { deAge: babySettings.deAge }, async () => {
+          const avg = await computeAverage(
+            [
+              { ...A, weight: wA, enabled: true },
+              { ...B, weight: wB, enabled: true },
+            ],
+            avgSettings,
+            (label, frac) => set({ progress: { label, frac: 0.1 + frac * 0.4 } }),
+          )
 
-        let out = avg.imageData
-        const canAge = babySettings.deAge && (await isAgingAvailable())
-        if (canAge) {
-          set({ ageProgress: 0, progress: { label: 'Imagining the child', frac: 0.55 } })
-          // computeAge needs a Face (bitmap + landmarks); the average is a bare ImageData,
-          // so re-detect on the blended (frontal, iris-aligned) face — the cleanest input.
-          const bmp = await createImageBitmap(avg.imageData)
-          const lm = await detectLandmarks(bmp)
-          if (lm) {
-            const synth: Face = {
-              id: 'baby-src',
-              name: 'baby',
-              bitmap: bmp,
-              width: bmp.width,
-              height: bmp.height,
-              landmarks: lm,
-              detecting: false,
-              failed: false,
-              weight: 1,
-              enabled: true,
-              editRev: 0,
+          let img = avg.imageData
+          const canAge = babySettings.deAge && (await isAgingAvailable())
+          if (canAge) {
+            set({ ageProgress: 0, progress: { label: 'Imagining the child', frac: 0.55 } })
+            // computeAge needs a Face (bitmap + landmarks); the average is a bare ImageData,
+            // so re-detect on the blended (frontal, iris-aligned) face — the cleanest input.
+            const bmp = await createImageBitmap(avg.imageData)
+            const lm = await detectLandmarks(bmp)
+            if (lm) {
+              const synth: Face = {
+                id: 'baby-src',
+                name: 'baby',
+                bitmap: bmp,
+                width: bmp.width,
+                height: bmp.height,
+                landmarks: lm,
+                detecting: false,
+                failed: false,
+                weight: 1,
+                enabled: true,
+                editRev: 0,
+              }
+              img = await computeAge(synth, 28, babySettings.childAge, (f) =>
+                set({ ageProgress: f, progress: { label: 'Imagining the child', frac: 0.6 + f * 0.4 } }),
+              )
             }
-            out = await computeAge(synth, 28, babySettings.childAge, (f) =>
-              set({ ageProgress: f, progress: { label: 'Imagining the child', frac: 0.6 + f * 0.4 } }),
-            )
+            bmp.close()
+            set({ ageProgress: null })
           }
-          bmp.close()
-          set({ ageProgress: null })
-        }
+          return img
+        })
         set({ result: out, computing: false, progress: null })
       } catch (e) {
         set({ error: (e as Error).message, computing: false, ageProgress: null, progress: null })
@@ -335,8 +342,9 @@ export const useStore = create<StoreState>((set, get) => ({
     // Defer so the overlay paints before the heavy work starts.
     setTimeout(async () => {
       try {
-        const res = await computeAverage(faces, settings, (label, frac) =>
-          set({ progress: { label, frac } }),
+        const count = faces.filter((f) => f.enabled && f.landmarks && !f.failed).length
+        const res = await tracked('average', { faces: count }, () =>
+          computeAverage(faces, settings, (label, frac) => set({ progress: { label, frac } })),
         )
         set({ result: res.imageData, computing: false, progress: null })
       } catch (e) {
@@ -407,8 +415,14 @@ export const useStore = create<StoreState>((set, get) => ({
     // Defer so the overlay paints before the heavy work starts.
     setTimeout(async () => {
       try {
-        const res = await computeReplace(faces, target, replaceSettings, (label, frac) =>
-          set({ progress: { label, frac } }),
+        const sources = faces.filter((f) => f.enabled && f.landmarks && !f.failed).length
+        const res = await tracked(
+          'replace',
+          { sources, blendTopK: replaceSettings.blendTopK },
+          () =>
+            computeReplace(faces, target, replaceSettings, (label, frac) =>
+              set({ progress: { label, frac } }),
+            ),
         )
         set({
           result: res.imageData,
@@ -447,18 +461,20 @@ export const useStore = create<StoreState>((set, get) => ({
     // Defer so the overlay paints; parsing/aging may also download models on first use.
     setTimeout(async () => {
       try {
-        const parsing = await getParsing(face)
-        let base: ImageData | undefined
-        if (editSettings.ageEnabled) {
-          set({ ageProgress: 0 })
-          base = await computeAge(face, editSettings.sourceAge, editSettings.targetAge, (f) =>
-            set({ ageProgress: f, progress: { label: 'Re-aging face', frac: f } }),
+        const res = await tracked('edit', { age: editSettings.ageEnabled }, async () => {
+          const parsing = await getParsing(face)
+          let base: ImageData | undefined
+          if (editSettings.ageEnabled) {
+            set({ ageProgress: 0 })
+            base = await computeAge(face, editSettings.sourceAge, editSettings.targetAge, (f) =>
+              set({ ageProgress: f, progress: { label: 'Re-aging face', frac: f } }),
+            )
+            set({ ageProgress: null })
+          }
+          return computeEdit(face, parsing, editSettings, base, (label, frac) =>
+            set({ progress: { label, frac } }),
           )
-          set({ ageProgress: null })
-        }
-        const res = await computeEdit(face, parsing, editSettings, base, (label, frac) =>
-          set({ progress: { label, frac } }),
-        )
+        })
         set({ result: res, computing: false, progress: null })
       } catch (e) {
         set({

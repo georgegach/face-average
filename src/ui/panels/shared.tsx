@@ -2,13 +2,18 @@ import { useEffect } from 'react'
 import { useStore } from '../../state/store'
 import { Icon } from '../Icon'
 import { exportPng, downloadBlob, shareImage } from '../../engine/export'
+import { capture } from '../../lib/analytics'
 
 /** Shared result actions: download the PNG (1× / 2×) and share the rendered image. */
 export function ResultActions({ result, prefix }: { result: ImageData; prefix: string }) {
-  const doExport = async (scale: number) =>
+  const doExport = async (scale: number) => {
+    capture('export', { format: 'png', scale, tool: prefix })
     downloadBlob(await exportPng(result, scale), `${prefix}${scale > 1 ? '@2x' : ''}.png`)
-  const doShare = async () =>
+  }
+  const doShare = async () => {
+    capture('share', { tool: prefix })
     shareImage(await exportPng(result, 1), `${prefix}.png`, 'Made with FaceStudio — 100% on-device')
+  }
   const canShare = typeof navigator !== 'undefined' && 'share' in navigator
   return (
     <div className="flex gap-2 border-t border-edge/70 pt-3">

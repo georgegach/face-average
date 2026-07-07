@@ -3,6 +3,7 @@ import { useStore } from '../state/store'
 import { drawFitted, drawFittedBitmap } from './canvasFit'
 import { MorphSession, morphSchedule } from '../engine/morph'
 import { exportVideo, exportGif, downloadBlob } from '../engine/export'
+import { capture } from '../lib/analytics'
 import { PresetGallery } from './PresetGallery'
 import { Slider } from './Slider'
 import { Icon } from './Icon'
@@ -168,6 +169,7 @@ function MorphStage() {
 
   const animate = async (kind: 'webm' | 'gif') => {
     if (!session) return
+    capture('export', { format: kind, tool: 'morph' })
     setBusy(true)
     try {
       const ts = morphSchedule(48, boomerang)

@@ -2,6 +2,7 @@ import { FilesetResolver, FaceLandmarker } from '@mediapipe/tasks-vision'
 import { MODELS } from './models'
 import { fetchWithProgress } from './download'
 import { progressChannel } from './util'
+import { capture } from '../lib/analytics'
 import type { Landmarks } from './types'
 
 // MediaPipe's WASM loader relies on importScripts, which is unavailable in ES
@@ -31,6 +32,7 @@ async function getLandmarker(): Promise<FaceLandmarker> {
           outputFacialTransformationMatrixes: false,
         })
         channel.emit({ loading: false, frac: 1 })
+        capture('model_load', { model: 'face_landmarker' })
         return lm
       } catch (e) {
         channel.emit({ loading: false, frac: 1 })

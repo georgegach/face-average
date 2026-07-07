@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../../state/store'
 import { upscale, type UpscaleStage } from '../../engine/upscale'
 import type { UpscalerKind } from '../../engine/models'
+import { tracked } from '../../lib/analytics'
 
 export function EnhancePanel() {
   const result = useStore((s) => s.result)
@@ -17,10 +18,12 @@ export function EnhancePanel() {
     setStage('download')
     setProgress(0)
     try {
-      const up = await upscale(result, kind, (st, f) => {
-        setStage(st)
-        setProgress(f)
-      })
+      const up = await tracked('enhance', { model: kind }, () =>
+        upscale(result, kind, (st, f) => {
+          setStage(st)
+          setProgress(f)
+        }),
+      )
       setResult(up)
       setMsg('Upscaled 4×.')
     } catch (e) {

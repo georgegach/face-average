@@ -6,6 +6,7 @@
 import * as ort from 'onnxruntime-web'
 import { MODELS } from './models'
 import { fetchWithProgressCached } from './download'
+import { capture } from '../lib/analytics'
 
 /** Prefer the WebGPU execution provider when the browser exposes it, else wasm. */
 function providers(): string[] {
@@ -27,5 +28,6 @@ export async function createOrtSession(
   ort.env.wasm.wasmPaths = MODELS.ortWasm
   ort.env.wasm.numThreads = 1
   const bytes = await fetchWithProgressCached(url, onDownload)
+  capture('model_load', { model: url.split('/').pop() })
   return ort.InferenceSession.create(bytes, { executionProviders: providers() })
 }
