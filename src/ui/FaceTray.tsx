@@ -34,6 +34,9 @@ export function FaceTray({
   const faces = useStore((s) => s.faces)
   const mode = useStore((s) => s.mode)
   const templateId = useStore((s) => s.settings.templateId)
+  const babyA = useStore((s) => s.babyA)
+  const babyB = useStore((s) => s.babyB)
+  const setBabyParents = useStore((s) => s.setBabyParents)
   const addFiles = useStore((s) => s.addFiles)
   const removeFace = useStore((s) => s.removeFace)
   const setWeight = useStore((s) => s.setWeight)
@@ -184,6 +187,33 @@ export function FaceTray({
                     aria-label="Enable or disable face"
                   >
                     <Icon name="power" size={14} />
+                  </button>
+                </div>
+              )}
+              {mode === 'baby' && !f.failed && f.landmarks && (
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <span className="text-[10px] text-muted mr-0.5">Parent</span>
+                  <button
+                    onClick={() => setBabyParents(f.id, babyB === f.id ? null : babyB)}
+                    className={`text-[11px] leading-none w-6 h-6 rounded-full border ${
+                      babyA === f.id
+                        ? 'border-accent text-accent-hi bg-accent/15'
+                        : 'border-edge text-muted hover:text-content'
+                    }`}
+                    aria-label={`Set ${f.name} as parent A`}
+                  >
+                    A
+                  </button>
+                  <button
+                    onClick={() => setBabyParents(babyA === f.id ? null : babyA, f.id)}
+                    className={`text-[11px] leading-none w-6 h-6 rounded-full border ${
+                      babyB === f.id
+                        ? 'border-accent text-accent-hi bg-accent/15'
+                        : 'border-edge text-muted hover:text-content'
+                    }`}
+                    aria-label={`Set ${f.name} as parent B`}
+                  >
+                    B
                   </button>
                 </div>
               )}

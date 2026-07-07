@@ -9,6 +9,16 @@ import { Icon, type IconName } from '../ui/Icon'
 import { getTheme, setTheme, type Theme } from '../ui/theme'
 
 export const MODE_META: Record<Mode, { label: string; icon: IconName; blurb: string }> = {
+  edit: {
+    label: 'Edit',
+    icon: 'wand',
+    blurb: 'Retouch, makeup, reshape, restyle hair and re-age — pro face editing, 100% on your device.',
+  },
+  baby: {
+    label: 'Future Baby',
+    icon: 'heart',
+    blurb: 'Blend two parents and de-age the result to glimpse your future child — just for fun.',
+  },
   average: {
     label: 'Average',
     icon: 'faces',
@@ -24,11 +34,6 @@ export const MODE_META: Record<Mode, { label: string; icon: IconName; blurb: str
     icon: 'swap',
     blurb: 'Swap the face in a photo using the closest-pose source — no AI generation.',
   },
-  edit: {
-    label: 'Edit',
-    icon: 'wand',
-    blurb: 'Retouch, makeup, hair, shape and re-aging tools — all on-device.',
-  },
   enhance: {
     label: 'Enhance',
     icon: 'sparkles',
@@ -36,14 +41,17 @@ export const MODE_META: Record<Mode, { label: string; icon: IconName; blurb: str
   },
 }
 
-const MODES: Mode[] = ['average', 'morph', 'replace', 'edit', 'enhance']
+// The editor is the flagship; everything else is a secondary tool behind "More tools".
+const SECONDARY_MODES: Mode[] = ['baby', 'average', 'morph', 'replace', 'enhance']
 
 export default function App() {
   const mode = useStore((s) => s.mode)
   const setMode = useStore((s) => s.setMode)
   const [webcam, setWebcam] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
+  const [toolsOpen, setToolsOpen] = useState(false)
   const [theme, setThemeState] = useState<Theme>(getTheme())
+  const secondaryActive = mode !== 'edit'
 
   const toggleTheme = () => {
     const next: Theme = theme === 'dark' ? 'light' : 'dark'
@@ -83,22 +91,66 @@ export default function App() {
             <Icon name="github" size={16} />
           </a>
         </div>
-        {/* Mode switcher: floating glass segmented control. */}
-        {/* mx-auto (not justify-center) so an overflowing pill scrolls from its left edge */}
-        <nav className="flex overflow-x-auto pb-1 -mx-3 px-3">
-          <div className="seg panel !rounded-full !p-1 mx-auto">
-            {MODES.map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                aria-current={mode === m ? 'page' : undefined}
-                className={`seg-item ${mode === m ? 'seg-item-active' : ''}`}
-              >
-                <Icon name={MODE_META[m].icon} size={15} className={mode === m ? 'text-accent' : ''} />
-                {MODE_META[m].label}
-              </button>
-            ))}
+        {/* Mode switcher: the flagship Edit segment + a "More tools" popover for the rest. */}
+        <nav className="relative flex justify-center pb-1">
+          <div className="seg panel !rounded-full !p-1">
+            <button
+              onClick={() => {
+                setMode('edit')
+                setToolsOpen(false)
+              }}
+              aria-current={mode === 'edit' ? 'page' : undefined}
+              className={`seg-item ${mode === 'edit' ? 'seg-item-active' : ''}`}
+            >
+              <Icon name="wand" size={15} className={mode === 'edit' ? 'text-accent' : ''} />
+              Edit
+            </button>
+            <button
+              onClick={() => setToolsOpen((o) => !o)}
+              aria-expanded={toolsOpen}
+              aria-current={secondaryActive ? 'page' : undefined}
+              className={`seg-item ${secondaryActive ? 'seg-item-active' : ''}`}
+            >
+              <Icon
+                name={secondaryActive ? MODE_META[mode].icon : 'sparkles'}
+                size={15}
+                className={secondaryActive ? 'text-accent' : ''}
+              />
+              {secondaryActive ? MODE_META[mode].label : 'More tools'}
+              <span className="text-[10px] opacity-60 ml-0.5">▾</span>
+            </button>
           </div>
+          {toolsOpen && (
+            <>
+              {/* click-away backdrop */}
+              <div className="fixed inset-0 z-30" onClick={() => setToolsOpen(false)} />
+              <div className="absolute top-full mt-2 z-40 panel !rounded-2xl p-1 flex flex-col gap-0.5 min-w-[210px]">
+                {SECONDARY_MODES.map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => {
+                      setMode(m)
+                      setToolsOpen(false)
+                    }}
+                    aria-current={mode === m ? 'page' : undefined}
+                    className={`seg-item !justify-start !rounded-xl w-full ${
+                      mode === m ? 'seg-item-active' : ''
+                    }`}
+                  >
+                    <Icon
+                      name={MODE_META[m].icon}
+                      size={15}
+                      className={mode === m ? 'text-accent' : ''}
+                    />
+                    {MODE_META[m].label}
+                    {m === 'baby' && (
+                      <span className="pill !px-2 !py-0.5 ml-auto text-[10px] text-accent-hi">fun</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </nav>
       </header>
 

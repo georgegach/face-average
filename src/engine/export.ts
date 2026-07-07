@@ -22,6 +22,28 @@ export async function exportPng(img: ImageData, scale = 1): Promise<Blob> {
   return await new Promise((res) => canvas.toBlob((b) => res(b!), 'image/png'))
 }
 
+/**
+ * Share a generated image via the Web Share API, falling back to a download when
+ * sharing isn't supported. User-initiated only, and it shares the *rendered result*
+ * — never the source photo — so it stays consistent with the on-device promise.
+ */
+export async function shareImage(blob: Blob, filename: string, text?: string): Promise<void> {
+  const file = new File([blob], filename, { type: blob.type })
+  const nav = navigator as Navigator & {
+    canShare?: (data?: ShareData) => boolean
+    share?: (data?: ShareData) => Promise<void>
+  }
+  if (nav.share && nav.canShare?.({ files: [file] })) {
+    try {
+      await nav.share({ files: [file], title: 'FaceStudio', text })
+    } catch {
+      /* user dismissed the share sheet — nothing to do */
+    }
+    return
+  }
+  downloadBlob(blob, filename)
+}
+
 export function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

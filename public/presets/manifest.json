@@ -1,6 +1,13 @@
 {
   "galleries": [
     {
+      "id": "portrait",
+      "title": "Sample portrait",
+      "subtitle": "One face to start editing right away",
+      "attribution": "Public-domain / fair-use portrait, from the original face-average project.",
+      "images": ["presets/presidents/barak-obama.jpg"]
+    },
+    {
       "id": "presidents",
       "title": "US Presidents",
       "subtitle": "Six modern presidents — the original demo",

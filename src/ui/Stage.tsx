@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../state/store'
-import { drawFitted } from './canvasFit'
+import { drawFitted, drawFittedBitmap } from './canvasFit'
 import { MorphSession, morphSchedule } from '../engine/morph'
 import { exportVideo, exportGif, downloadBlob } from '../engine/export'
 import { PresetGallery } from './PresetGallery'
@@ -42,11 +42,20 @@ function ResultStage() {
   const error = useStore((s) => s.error)
   const faces = useStore((s) => s.faces)
   const mode = useStore((s) => s.mode)
+  const editFaceId = useStore((s) => s.editFaceId)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [comparing, setComparing] = useState(false)
+
+  // Before/after compare only makes sense in the editor, against the selected face.
+  const editFace = mode === 'edit' ? faces.find((f) => f.id === editFaceId) : undefined
+  const canCompare = !!result && !!editFace
 
   useEffect(() => {
-    if (result && canvasRef.current) drawFitted(canvasRef.current, result)
-  }, [result])
+    const c = canvasRef.current
+    if (!c) return
+    if (comparing && editFace) drawFittedBitmap(c, editFace.bitmap)
+    else if (result) drawFitted(c, result)
+  }, [result, comparing, editFace])
 
   if (!result && faces.length === 0) {
     return (
@@ -61,7 +70,13 @@ function ResultStage() {
       {computing && (
         <ProgressOverlay
           fallback={
-            mode === 'replace' ? 'Replacing…' : mode === 'edit' ? 'Applying edits…' : 'Averaging…'
+            mode === 'replace'
+              ? 'Replacing…'
+              : mode === 'edit'
+                ? 'Applying edits…'
+                : mode === 'baby'
+                  ? 'Generating…'
+                  : 'Averaging…'
           }
         />
       )}
@@ -71,11 +86,25 @@ function ResultStage() {
         </div>
       )}
       {result ? (
-        <canvas
-          ref={canvasRef}
-          data-testid="result-canvas"
-          className="max-w-full max-h-full rounded-2xl shadow-glass object-contain"
-        />
+        <>
+          <canvas
+            ref={canvasRef}
+            data-testid="result-canvas"
+            className="max-w-full max-h-full rounded-2xl shadow-glass object-contain"
+          />
+          {canCompare && (
+            <button
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 btn-ghost text-xs z-10 select-none touch-none"
+              onPointerDown={() => setComparing(true)}
+              onPointerUp={() => setComparing(false)}
+              onPointerLeave={() => setComparing(false)}
+              onPointerCancel={() => setComparing(false)}
+            >
+              <Icon name={comparing ? 'photo' : 'wand'} size={13} />
+              {comparing ? 'Original' : 'Hold to compare'}
+            </button>
+          )}
+        </>
       ) : mode === 'replace' ? (
         <div className="card px-5 py-4 text-muted text-sm text-center max-w-xs">
           <Icon name="swap" size={22} className="mx-auto mb-2 text-accent" />
@@ -87,6 +116,12 @@ function ResultStage() {
           <Icon name="wand" size={22} className="mx-auto mb-2 text-accent" />
           Pick a face and adjust the tools on the right, then press{' '}
           <span className="text-accent-hi font-medium">Apply edits</span>.
+        </div>
+      ) : mode === 'baby' ? (
+        <div className="card px-5 py-4 text-muted text-sm text-center max-w-xs">
+          <Icon name="heart" size={22} className="mx-auto mb-2 text-accent" />
+          Pick two parents on the right, then press{' '}
+          <span className="text-accent-hi font-medium">Generate baby</span>.
         </div>
       ) : (
         <div className="card px-5 py-4 text-muted text-sm text-center max-w-xs">

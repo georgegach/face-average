@@ -54,6 +54,22 @@ export const DEFAULT_SETTINGS: AverageSettings = {
   templateId: null,
 }
 
+export interface BabySettings {
+  parentLean: number // -1 = all Parent A … 0 = 50/50 … +1 = all Parent B
+  childAge: number // target apparent age of the child (slider ~5..12)
+  deAge: boolean // apply FRAN de-aging (auto-skipped if the model is absent)
+  outWidth: number
+  outHeight: number
+}
+
+export const DEFAULT_BABY_SETTINGS: BabySettings = {
+  parentLean: 0,
+  childAge: 7,
+  deAge: true,
+  outWidth: 1024,
+  outHeight: 1024,
+}
+
 export interface ReplaceSettings {
   feather: number // blend-ramp width as a fraction of the target face bbox width
   grow: number // face-oval expansion from its centroid

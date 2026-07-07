@@ -46,16 +46,16 @@ function PresetCard({ gallery, onLoad }: { gallery: Gallery; onLoad: () => void 
         <div className="text-xs text-muted truncate">{gallery.subtitle}</div>
       </div>
       <span className="text-xs text-accent-hi font-medium shrink-0">
-        Try it · {gallery.images.length} faces
+        Try it · {gallery.images.length} face{gallery.images.length === 1 ? '' : 's'}
       </span>
     </button>
   )
 }
 
 const STEPS: { icon: IconName; title: string; text: string }[] = [
-  { icon: 'upload', title: 'Add faces', text: 'Drop photos, use the webcam, or load a preset.' },
-  { icon: 'wand', title: 'Pick a tool', text: 'Average, morph, replace, edit or enhance.' },
-  { icon: 'download', title: 'Export', text: 'Save as PNG, GIF or video — all offline.' },
+  { icon: 'upload', title: 'Add a photo', text: 'Drop a portrait, snap a webcam shot, or load a sample.' },
+  { icon: 'wand', title: 'Edit & restyle', text: 'Retouch, makeup, reshape, recolour hair, re-age.' },
+  { icon: 'download', title: 'Save & share', text: 'Export or share — all offline, nothing uploaded.' },
 ]
 
 export function PresetGallery({ compact = false }: { compact?: boolean }) {
@@ -86,12 +86,15 @@ export function PresetGallery({ compact = false }: { compact?: boolean }) {
           className="w-16 h-16 rounded-[22px] grid place-items-center text-white shadow-glass"
           style={{ background: 'linear-gradient(135deg, #0a84ff, #bf5af2)' }}
         >
-          <Icon name="faces" size={34} />
+          <Icon name="wand" size={34} />
         </div>
       </div>
-      <h2 className="text-2xl font-semibold tracking-tight text-content">Blend faces into one</h2>
+      <h2 className="text-2xl font-semibold tracking-tight text-content">
+        Pro face editing that never leaves your device
+      </h2>
       <p className="text-sm text-muted mt-2">
-        Average, morph, replace, retouch and upscale faces — entirely in your browser.
+        Retouch, restyle, reshape and re-age any portrait — entirely on your device, free, with
+        nothing uploaded.
       </p>
       <p className="pill text-muted mt-3">
         <Icon name="shield" size={12} className="text-emerald-500" />

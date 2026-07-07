@@ -26,6 +26,8 @@ export type IconName =
   | 'upload'
   | 'download'
   | 'photo'
+  | 'heart'
+  | 'share'
 
 // Minimal inline SVG set — stroke uses currentColor so icons inherit text color.
 const PATHS: Record<IconName, JSX.Element> = {
@@ -110,6 +112,17 @@ const PATHS: Record<IconName, JSX.Element> = {
       <rect x="3" y="5" width="18" height="14" rx="3" />
       <circle cx="9" cy="10" r="1.6" />
       <path d="M4 17l4.5-4.5 3 3L16 11l4 4" />
+    </>
+  ),
+  heart: (
+    <path d="M12 20s-7-4.4-9.3-8.3C1.2 8.9 2.5 5.5 5.7 5.5c1.9 0 3.2 1.1 4.1 2.4l.9 1.3.9-1.3c.9-1.3 2.2-2.4 4.1-2.4 3.2 0 4.5 3.4 3 6.2C19 15.6 12 20 12 20z" />
+  ),
+  share: (
+    <>
+      <circle cx="6" cy="12" r="2.5" />
+      <circle cx="17" cy="6" r="2.5" />
+      <circle cx="17" cy="18" r="2.5" />
+      <path d="M8.2 10.8l6.6-3.6M8.2 13.2l6.6 3.6" />
     </>
   ),
 }

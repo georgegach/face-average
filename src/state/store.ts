@@ -3,9 +3,11 @@ import {
   DEFAULT_SETTINGS,
   DEFAULT_REPLACE_SETTINGS,
   DEFAULT_EDIT_SETTINGS,
+  DEFAULT_BABY_SETTINGS,
   type AverageSettings,
   type ReplaceSettings,
   type EditSettings,
+  type BabySettings,
   type Face,
 } from '../engine/types'
 import { detectLandmarks, onLandmarkerProgress, type LoadState } from '../engine/landmarks'
@@ -14,9 +16,10 @@ import { computeAverage } from '../engine/average'
 import { computeReplace } from '../engine/replace'
 import { computeEdit } from '../engine/edit'
 import { getParsing, onParsingProgress } from '../engine/parsing'
-import { computeAge, onAgingProgress } from '../engine/aging'
+import { computeAge, isAgingAvailable, onAgingProgress } from '../engine/aging'
 
-export type Mode = 'average' | 'morph' | 'enhance' | 'replace' | 'edit'
+// The face editor is the flagship; the rest are auxiliary tools + the "baby" gimmick.
+export type Mode = 'edit' | 'baby' | 'average' | 'morph' | 'enhance' | 'replace'
 
 let idc = 0
 const newId = () => `f${++idc}`
@@ -34,6 +37,9 @@ interface StoreState {
   error: string | null
   morphA: string | null
   morphB: string | null
+  babyA: string | null
+  babyB: string | null
+  babySettings: BabySettings
   modelLoad: LoadState
   target: FaceView | null
   replaceSettings: ReplaceSettings
@@ -62,6 +68,9 @@ interface StoreState {
   runAverage: () => void
   setResult: (img: ImageData | null) => void
   setMorphPair: (a: string | null, b: string | null) => void
+  setBabyParents: (a: string | null, b: string | null) => void
+  updateBabySettings: (patch: Partial<BabySettings>) => void
+  runBaby: () => void
   setTargetFromFiles: (files: FileList | File[]) => Promise<void>
   clearTarget: () => void
   updateReplaceSettings: (patch: Partial<ReplaceSettings>) => void
@@ -75,13 +84,16 @@ interface StoreState {
 
 export const useStore = create<StoreState>((set, get) => ({
   faces: [],
-  mode: 'average',
+  mode: 'edit',
   settings: { ...DEFAULT_SETTINGS },
   result: null,
   computing: false,
   error: null,
   morphA: null,
   morphB: null,
+  babyA: null,
+  babyB: null,
+  babySettings: { ...DEFAULT_BABY_SETTINGS },
   modelLoad: { loading: false, frac: 1 },
   target: null,
   replaceSettings: { ...DEFAULT_REPLACE_SETTINGS },
@@ -120,6 +132,8 @@ export const useStore = create<StoreState>((set, get) => ({
         faces: s.faces.map((f) =>
           f.id === face.id ? { ...f, landmarks: lm, detecting: false, failed: !lm } : f,
         ),
+        // Auto-select the first detected face for the flagship editor.
+        editFaceId: s.editFaceId ?? (lm ? face.id : null),
       }))
     } catch (err) {
       console.error('landmark detection failed', err)
@@ -127,10 +141,12 @@ export const useStore = create<StoreState>((set, get) => ({
         faces: s.faces.map((f) => (f.id === face.id ? { ...f, detecting: false, failed: true } : f)),
       }))
     }
-    // Seed morph selection with the first two faces.
-    const { faces, morphA, morphB } = get()
+    // Seed the morph pair and the two baby "parent" slots with the first two faces.
+    const { faces, morphA, morphB, babyA, babyB } = get()
     if (!morphA && faces[0]) set({ morphA: faces[0].id })
     else if (!morphB && faces[1]) set({ morphB: faces[1].id })
+    if (!babyA && faces[0]) set({ babyA: faces[0].id })
+    else if (!babyB && faces[1] && faces[1].id !== babyA) set({ babyB: faces[1].id })
   },
 
   addFiles: async (files) => {
@@ -176,13 +192,24 @@ export const useStore = create<StoreState>((set, get) => ({
         settings,
         morphA: s.morphA === id ? null : s.morphA,
         morphB: s.morphB === id ? null : s.morphB,
+        babyA: s.babyA === id ? null : s.babyA,
+        babyB: s.babyB === id ? null : s.babyB,
+        editFaceId: s.editFaceId === id ? null : s.editFaceId,
       }
     }),
 
   clearFaces: () =>
     set((s) => {
       s.faces.forEach((f) => f.bitmap.close())
-      return { faces: [], result: null, morphA: null, morphB: null }
+      return {
+        faces: [],
+        result: null,
+        morphA: null,
+        morphB: null,
+        babyA: null,
+        babyB: null,
+        editFaceId: null,
+      }
     }),
 
   setWeight: (id, weight) =>
@@ -223,6 +250,83 @@ export const useStore = create<StoreState>((set, get) => ({
   setResult: (img) => set({ result: img }),
 
   setMorphPair: (a, b) => set({ morphA: a, morphB: b }),
+
+  setBabyParents: (a, b) => set({ babyA: a, babyB: b }),
+
+  updateBabySettings: (patch) => set((s) => ({ babySettings: { ...s.babySettings, ...patch } })),
+
+  // "Future baby" gimmick: blend two parents (the averaging engine) and de-age the
+  // blend toward a child (the FRAN re-aging engine). A fun composition of two existing
+  // pipelines — not a genetic prediction. Falls back to the plain blend if FRAN is absent.
+  runBaby: () => {
+    const { faces, babyA, babyB, babySettings } = get()
+    const valid = faces.filter((f) => f.landmarks && !f.failed)
+    const A = valid.find((f) => f.id === babyA) ?? valid[0]
+    const B =
+      valid.find((f) => f.id === babyB && f.id !== A?.id) ?? valid.find((f) => f.id !== A?.id)
+    if (!A || !B) {
+      set({ error: 'Pick two parent photos with detected faces' })
+      return
+    }
+    set({ computing: true, error: null, progress: { label: 'Blending parents', frac: 0 } })
+    setTimeout(async () => {
+      try {
+        // Map the resemblance slider onto per-parent blend weights.
+        const lean = babySettings.parentLean
+        const wA = lean <= 0 ? 1 : 1 - lean
+        const wB = lean >= 0 ? 1 : 1 + lean
+        const avgSettings: AverageSettings = {
+          ...DEFAULT_SETTINGS,
+          outWidth: babySettings.outWidth,
+          outHeight: babySettings.outHeight,
+          background: 'blur',
+          colorNormalize: true,
+          templateId: null,
+        }
+        const avg = await computeAverage(
+          [
+            { ...A, weight: wA, enabled: true },
+            { ...B, weight: wB, enabled: true },
+          ],
+          avgSettings,
+          (label, frac) => set({ progress: { label, frac: 0.1 + frac * 0.4 } }),
+        )
+
+        let out = avg.imageData
+        const canAge = babySettings.deAge && (await isAgingAvailable())
+        if (canAge) {
+          set({ ageProgress: 0, progress: { label: 'Imagining the child', frac: 0.55 } })
+          // computeAge needs a Face (bitmap + landmarks); the average is a bare ImageData,
+          // so re-detect on the blended (frontal, iris-aligned) face — the cleanest input.
+          const bmp = await createImageBitmap(avg.imageData)
+          const lm = await detectLandmarks(bmp)
+          if (lm) {
+            const synth: Face = {
+              id: 'baby-src',
+              name: 'baby',
+              bitmap: bmp,
+              width: bmp.width,
+              height: bmp.height,
+              landmarks: lm,
+              detecting: false,
+              failed: false,
+              weight: 1,
+              enabled: true,
+              editRev: 0,
+            }
+            out = await computeAge(synth, 28, babySettings.childAge, (f) =>
+              set({ ageProgress: f, progress: { label: 'Imagining the child', frac: 0.6 + f * 0.4 } }),
+            )
+          }
+          bmp.close()
+          set({ ageProgress: null })
+        }
+        set({ result: out, computing: false, progress: null })
+      } catch (e) {
+        set({ error: (e as Error).message, computing: false, ageProgress: null, progress: null })
+      }
+    }, 30)
+  },
 
   runAverage: () => {
     const { faces, settings } = get()

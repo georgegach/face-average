@@ -29,13 +29,17 @@ test('averages preset faces into a real image', async ({ page }) => {
     console.log(`[reqfail] ${r.url()} — ${r.failure()?.errorText}`),
   )
   await page.goto('/')
-  await expect(page.getByText('Blend faces into one')).toBeVisible()
+  await expect(page.getByText('Pro face editing that never leaves your device')).toBeVisible()
 
   // Load the presidents preset from the empty-state gallery.
   await page.getByRole('button', { name: /US Presidents/ }).click()
 
   // Wait until at least 4 faces have been detected (478 pts badge).
   await expect(page.getByText('478 pts').nth(3)).toBeVisible({ timeout: 90_000 })
+
+  // Averaging is now a secondary tool behind the "More tools" menu.
+  await page.getByRole('button', { name: /More tools/ }).click()
+  await page.getByRole('button', { name: 'Average', exact: true }).click()
 
   // Render the average.
   await page.getByRole('button', { name: /Average \d+ faces/ }).click()
@@ -54,6 +58,7 @@ test('morph mode renders and responds to the blend slider', async ({ page }) => 
   await page.getByRole('button', { name: /US Presidents/ }).click()
   await expect(page.getByText('478 pts').nth(1)).toBeVisible({ timeout: 90_000 })
 
+  await page.getByRole('button', { name: /More tools/ }).click()
   await page.getByRole('button', { name: 'Morph', exact: true }).click()
   await expect(page.getByTestId('morph-canvas')).toBeVisible({ timeout: 30_000 })
   await expect
@@ -77,6 +82,7 @@ test('replace mode warps a source face onto a target photo', async ({ page }) =>
   await page.getByRole('button', { name: /US Presidents/ }).click()
   await expect(page.getByText('478 pts').nth(1)).toBeVisible({ timeout: 90_000 })
 
+  await page.getByRole('button', { name: /More tools/ }).click()
   await page.getByRole('button', { name: 'Replace', exact: true }).click()
 
   // Target: upload a committed preset image straight into the hidden target input.
@@ -113,5 +119,28 @@ test('edit mode parses a face and applies mask-based edits', async ({ page }) =>
 
   await expect
     .poll(() => canvasVariance(page, 'result-canvas'), { timeout: 60_000 })
+    .toBeGreaterThan(50)
+})
+
+test('future baby blends two parents into a preview', async ({ page }) => {
+  page.on('console', (m) => console.log(`[browser:${m.type()}] ${m.text()}`))
+  page.on('pageerror', (e) => console.log(`[pageerror] ${e.message}`))
+  await page.goto('/')
+
+  await page.getByRole('button', { name: /US Presidents/ }).click()
+  await expect(page.getByText('478 pts').nth(1)).toBeVisible({ timeout: 90_000 })
+
+  await page.getByRole('button', { name: /More tools/ }).click()
+  await page.getByRole('button', { name: /Future Baby/ }).click()
+
+  // Keep it fast and deterministic whether or not the FRAN model is published:
+  // turn off neural de-aging so it's a pure on-device blend of the two parents.
+  await page.getByRole('checkbox', { name: 'De-age to child' }).uncheck()
+
+  await page.getByRole('button', { name: 'Generate baby' }).click()
+  await expect(page.getByTestId('result-canvas')).toBeVisible({ timeout: 60_000 })
+
+  await expect
+    .poll(() => canvasVariance(page, 'result-canvas'), { timeout: 30_000 })
     .toBeGreaterThan(50)
 })
