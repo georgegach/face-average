@@ -2,9 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// GitHub Pages serves this project under /face-average/
+// GitHub Pages serves this project under /facestudio/
 export default defineConfig({
-  base: '/face-average/',
+  base: '/facestudio/',
   plugins: [
     react(),
     VitePWA({
@@ -18,8 +18,8 @@ export default defineConfig({
         theme_color: '#0a0a0e',
         background_color: '#0a0a0e',
         display: 'standalone',
-        start_url: '/face-average/',
-        scope: '/face-average/',
+        start_url: '/facestudio/',
+        scope: '/facestudio/',
         icons: [
           { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
         ],

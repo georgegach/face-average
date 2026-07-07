@@ -2,7 +2,7 @@
 
 A private, **on-device face editor** — retouch, restyle, reshape and re-age portraits **entirely in your browser**. No uploads, no server, no accounts — your photos never leave your device, and it's free.
 
-**→ [Live app](https://georgegach.github.io/face-average/)**
+**→ [Live app](https://georgegach.github.io/facestudio/)**
 
 FaceStudio is a ground-up rewrite of the original `face-average` Python/dlib CLI as a WASM-powered static site. It uses Google's **MediaPipe Face Landmarker** (478-point dense mesh) for detection and a **WebGL2 piecewise-affine warp** for real-time face manipulation, all client-side.
 
@@ -22,21 +22,26 @@ The flagship is a full **face editor**; averaging, morphing, replace, enhance, a
 ## Architecture
 
 - **Vite + React + TypeScript + Tailwind**.
-- ML runs in **Web Workers**; warping runs on the **GPU** (WebGL2).
+- ML runs on the **main thread** via WASM/WebGPU — MediaPipe's loader needs `importScripts`, unavailable in ES-module workers — while warping runs on the **GPU** (WebGL2).
 - Models are **self-hosted** (fetched at build time, SHA-checked) and cached by a service worker.
-- Deployed to **GitHub Pages** by CI, which also runs a Playwright smoke test that exercises the real WASM pipeline.
+- Deployed to **GitHub Pages** by CI, which runs `vitest` unit tests over the pure engine maths and a Playwright smoke test that exercises the real WASM pipeline before every deploy.
 
 ## Development
 
 ```bash
-npm ci
+npm install
 bash scripts/fetch-models.sh   # downloads MediaPipe + ONNX assets into public/models
 npm run dev
+npm test                       # unit tests (vitest); npm run test:e2e for the Playwright smoke suite
 ```
+
+## Privacy
+
+Every pixel operation runs **on your device** — photos are never uploaded, and there are no accounts. The app collects **anonymous usage analytics** (PostHog, EU region): page views and product events such as which tool was run, its duration and success, exports, and model downloads. **No images, filenames, or personal data are ever sent**, and analytics is disabled in development and automated (CI) runs.
 
 ## Legacy
 
-The original Python averaging CLI (dlib, 68 landmarks, `.ff` cache format) lives on the [`legacy`](https://github.com/georgegach/face-average/tree/legacy) branch.
+The original Python averaging CLI (dlib, 68 landmarks, `.ff` cache format) lives on the [`legacy`](https://github.com/georgegach/facestudio/tree/legacy) branch.
 
 ## Acknowledgements
 
@@ -45,4 +50,4 @@ The original Python averaging CLI (dlib, 68 landmarks, `.ff` cache format) lives
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+Copyright © 2018–2026 George Gach. Licensed under **GPL-3.0-only** — see [LICENSE](./LICENSE).

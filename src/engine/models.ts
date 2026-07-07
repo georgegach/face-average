@@ -1,4 +1,4 @@
-// Runtime paths to self-hosted model assets. BASE_URL is '/face-average/' in
+// Runtime paths to self-hosted model assets. BASE_URL is '/facestudio/' in
 // production and '/' in dev, so these resolve same-origin in both.
 const B = import.meta.env.BASE_URL
 

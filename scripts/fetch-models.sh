@@ -72,7 +72,7 @@ fetch \
 # Optional: the asset exists only after the one-time conversion workflow has run;
 # builds stay green without it and the Age tool reports itself unavailable.
 fetch \
-  "https://github.com/georgegach/face-average/releases/download/models/fran.onnx" \
+  "https://github.com/georgegach/facestudio/releases/download/models/fran.onnx" \
   "$OUT/fran.onnx" "5941608e21f5d218ec52862938898efb276b63048aa8586372ff046ef865e22b" "optional"
 
 # Note: ONNX upscalers are NOT bundled — they exceed GitHub Pages' deploy size

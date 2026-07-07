@@ -81,7 +81,7 @@ export default function App() {
             <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={16} />
           </button>
           <a
-            href="https://github.com/georgegach/face-average"
+            href="https://github.com/georgegach/facestudio"
             target="_blank"
             rel="noreferrer"
             title="View source on GitHub"
